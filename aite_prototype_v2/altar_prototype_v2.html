@@ -1,0 +1,49 @@
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>デジタル仏壇・お供えプロトタイプ（再生成版）</title>
+<style>
+  body { font-family: sans-serif; background:#f7f7f7; margin:0; padding:20px; }
+  .altar { background:white; border-radius:12px; padding:20px; max-width:400px; margin:auto; box-shadow:0 2px 6px rgba(0,0,0,0.1); }
+  .portrait { width:100px; height:140px; background:#ccc; margin:auto; border:4px solid #eee; display:flex; align-items:center; justify-content:center; font-size:12px; color:#444; }
+  .info { text-align:center; margin-top:10px; }
+  .stage { margin:20px 0; min-height:150px; display:flex; align-items:center; justify-content:center; border:2px dashed #ddd; border-radius:12px; background:#fafafa; }
+  .btn { display:inline-block; padding:10px 16px; margin:5px; border-radius:8px; background:#c59d5f; color:white; text-decoration:none; font-weight:bold; }
+  .btn-outline { background:white; color:#c59d5f; border:1px solid #c59d5f; }
+  .offerings { display:flex; gap:10px; justify-content:center; flex-wrap:wrap; }
+  .offer { background:white; border:1px solid #ddd; border-radius:8px; padding:10px; text-align:center; cursor:pointer; }
+  .offer:hover { background:#f0f0f0; }
+</style>
+</head>
+<body>
+  <div class="altar">
+    <div class="portrait">遺影（仮）</div>
+    <div class="info">
+      <div><strong>山田 太郎（仮）</strong></div>
+      <small>命日：2024年4月12日</small>
+    </div>
+    <div class="stage" id="stage">ここに大きくお供えを表示します</div>
+    <div class="offerings">
+      <div class="offer" onclick="offer('供花')">供花</div>
+      <div class="offer" onclick="offer('和菓子')">和菓子</div>
+      <div class="offer" onclick="offer('お線香')">お線香</div>
+      <div class="offer" onclick="offer('白菊の花束（企業）')">白菊の花束（企業）</div>
+      <div class="offer" onclick="offer('桜最中（企業）')">桜最中（企業）</div>
+    </div>
+    <div style="text-align:center; margin-top:10px;">
+      <a href="#" class="btn-outline" onclick="clearOffer()">お供えを片付ける</a>
+    </div>
+  </div>
+<script>
+function offer(name){
+  document.getElementById('stage').innerHTML = '<div style="font-size:20px; text-align:center;">あなたがお供えした「'+name+'」</div>';
+}
+function clearOffer(){
+  document.getElementById('stage').innerHTML = 'ここに大きくお供えを表示します';
+}
+</script>
+</body>
+</html>
