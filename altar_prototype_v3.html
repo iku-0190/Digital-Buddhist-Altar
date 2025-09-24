@@ -1,0 +1,140 @@
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>デジタル仏壇・お供えプロトタイプ v3（CSP対策）</title>
+<style>
+  :root { --bg:#f7f7f7; --card:#fff; --accent:#c59d5f; --muted:#666; --text:#222; }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans JP","Hiragino Sans","Yu Gothic",Meiryo,sans-serif}
+  header{position:sticky;top:0;background:var(--card);border-bottom:1px solid #e9e9e9;padding:12px 16px;z-index:10}
+  h1{font-size:16px;margin:0}
+  .container{max-width:480px;margin:0 auto;padding:16px}
+  .card{background:var(--card);border-radius:16px;padding:16px;border:1px solid #eee;box-shadow:0 4px 12px rgba(0,0,0,.04)}
+  .top{display:grid;grid-template-columns:96px 1fr;gap:12px;align-items:center}
+  .portrait{width:96px;height:128px;background:linear-gradient(180deg,#ddd,#bbb);border:3px solid #e5e5e5;border-radius:8px;display:grid;place-items:center;color:#555;font-size:14px}
+  .meta small{color:var(--muted);display:block}
+  .btn{padding:12px 16px;border-radius:12px;border:1px solid var(--accent);background:var(--accent);color:#fff;font-weight:600;cursor:pointer}
+  .btn-outline{background:transparent;color:var(--accent)}
+  .stage{margin-top:12px;background:#fcfbf8;border:1px dashed #e8e0cf;border-radius:16px;min-height:240px;display:grid;place-items:center;position:relative;overflow:hidden}
+  .hint{color:var(--muted);font-size:13px}
+  .offering-large{animation:pop .28s ease-out;text-align:center}
+  .label{margin-top:8px;font-weight:600}
+  @keyframes pop{0%{transform:scale(.9);opacity:0}100%{transform:scale(1);opacity:1}}
+  .sheetWrap{position:fixed;inset:0;display:none;align-items:flex-end;justify-content:center;background:rgba(0,0,0,.35);z-index:50}
+  .sheet{width:100%;max-width:520px;background:var(--card);border-top-left-radius:20px;border-top-right-radius:20px;padding:16px;box-shadow:0 -8px 24px rgba(0,0,0,.2)}
+  .tabbar{display:flex;gap:8px;margin-bottom:8px}
+  .chip{padding:8px 12px;border-radius:999px;border:1px solid #ddd;background:#fafafa;font-size:13px;cursor:pointer}
+  .chip.active{border-color:var(--accent);background:#fff7e8}
+  .grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+  .offer{border:1px solid #eee;border-radius:12px;padding:10px;background:#fff;text-align:center;cursor:pointer}
+  .thumb{height:72px;display:grid;place-items:center}
+  .name{margin-top:6px;font-size:13px;font-weight:600}
+  .type{margin-top:2px;font-size:12px;color:var(--muted)}
+  .purchase{margin-top:8px;display:inline-block;font-size:12px;padding:6px 10px;border-radius:8px;border:1px solid #ddd;background:#fafafa;text-decoration:none;color:#333}
+</style>
+</head>
+<body>
+<header><h1>デジタル仏壇（試作 v3）</h1></header>
+<div class="container">
+  <div class="card">
+    <div class="top">
+      <div class="portrait" aria-label="遺影（仮）">遺影（仮）</div>
+      <div class="meta">
+        <div style="font-weight:700;">山田 太郎（仮）</div>
+        <small>命日：2024年4月12日</small>
+        <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn" id="open">お供えをする</button>
+          <button class="btn btn-outline" id="clear">お供えを片付ける</button>
+        </div>
+      </div>
+    </div>
+    <div class="stage" id="stage" aria-live="polite">
+      <div class="hint">ここに<strong>大きく</strong>お供えを表示します</div>
+    </div>
+  </div>
+  <p style="text-align:center;color:#666;font-size:12px;margin:16px 0 40px">※ この画面は機能検証用の簡易プロトタイプです</p>
+</div>
+
+<div class="sheetWrap" id="sheetWrap" role="dialog" aria-modal="true">
+  <div class="sheet">
+    <div class="tabbar">
+      <button class="chip active" data-tab="free">無料お供え</button>
+      <button class="chip" data-tab="brand">企業お供え（サンプル）</button>
+    </div>
+    <h3 id="sheetTitle" style="margin:0 0 8px">無料お供え</h3>
+    <div class="grid" id="grid"></div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const FREE = [
+    { id:'flower', name:'供花', type:'無料', svg:`<svg viewBox="0 0 64 64" aria-hidden="true"><circle cx="20" cy="20" r="10"/><circle cx="44" cy="20" r="10"/><circle cx="20" cy="44" r="10"/><circle cx="44" cy="44" r="10"/><circle cx="32" cy="32" r="12"/></svg>` },
+    { id:'wagashi', name:'和菓子', type:'無料', svg:`<svg viewBox="0 0 64 64" aria-hidden="true"><rect x="10" y="24" width="44" height="20" rx="6" ry="6"/><circle cx="22" cy="34" r="6" fill="white"/><circle cx="42" cy="34" r="6" fill="white"/></svg>` },
+    { id:'incense', name:'お線香', type:'無料', svg:`<svg viewBox="0 0 64 64" aria-hidden="true"><rect x="20" y="16" width="8" height="32"/><rect x="36" y="16" width="8" height="32"/><path d="M24 16 Q28 8 24 4" stroke="black" fill="none"/><path d="M40 16 Q44 8 40 4" stroke="black" fill="none"/></svg>` },
+  ];
+  const BRAND = [
+    { id:'brand-flower', name:'白菊の花束', type:'○○フラワー', svg:`<svg viewBox="0 0 64 64" aria-hidden="true"><circle cx="20" cy="20" r="10"/><circle cx="44" cy="20" r="10"/><circle cx="32" cy="10" r="10"/><rect x="30" y="20" width="4" height="28"/></svg>`, url:'#' },
+    { id:'brand-wagashi', name:'桜最中', type:'△△和菓子舗', svg:`<svg viewBox="0 0 64 64" aria-hidden="true"><rect x="12" y="22" width="40" height="20" rx="10"/><path d="M12 32 H52" stroke="black" /></svg>`, url:'#' },
+    { id:'brand-incense', name:'香り立つお線香', type:'香道堂', svg:`<svg viewBox="0 0 64 64" aria-hidden="true"><rect x="18" y="18" width="8" height="28"/><rect x="30" y="18" width="8" height="28"/><rect x="42" y="18" width="8" height="28"/></svg>`, url:'#' },
+  ];
+
+  let current = 'free';
+  const stage = document.getElementById('stage');
+  const openBtn = document.getElementById('open');
+  const clearBtn = document.getElementById('clear');
+  const wrap = document.getElementById('sheetWrap');
+  const grid = document.getElementById('grid');
+  const title = document.getElementById('sheetTitle');
+  const tabs = Array.from(document.querySelectorAll('.chip'));
+
+  function renderOffers(){
+    const list = current === 'free' ? FREE : BRAND;
+    title.textContent = current === 'free' ? '無料お供え' : '企業お供え（サンプル）';
+    grid.innerHTML = '';
+    list.forEach(o => {
+      const card = document.createElement('button');
+      card.className = 'offer';
+      card.setAttribute('data-id', o.id);
+      card.innerHTML = `
+        <div class="thumb">${o.svg}</div>
+        <div class="name">${o.name}</div>
+        <div class="type">${o.type}</div>
+        ${o.url ? `<span class="purchase" aria-hidden="true">購入ページへ</span>` : ''}
+      `;
+      card.addEventListener('click', () => placeOffering(o));
+      grid.appendChild(card);
+    });
+  }
+
+  function placeOffering(o){
+    stage.innerHTML = `
+      <div class="offering-large">
+        <div>${o.svg}</div>
+        <div class="label">あなたがお供えした「${o.name}」</div>
+        <div style="font-size:12px;color:#666;margin-top:4px;">（${current === 'free' ? '無料お供え' : o.type}）</div>
+      </div>`;
+    closeSheet();
+  }
+
+  function openSheet(){ wrap.style.display = 'flex'; renderOffers(); }
+  function closeSheet(){ wrap.style.display = 'none'; }
+
+  openBtn.addEventListener('click', openSheet);
+  clearBtn.addEventListener('click', () => {
+    stage.innerHTML = `<div class="hint">ここに<strong>大きく</strong>お供えを表示します</div>`;
+  });
+  wrap.addEventListener('click', (e)=>{ if(e.target === wrap) closeSheet(); });
+  tabs.forEach(tab => tab.addEventListener('click', () => {
+    tabs.forEach(t=>t.classList.remove('active'));
+    tab.classList.add('active');
+    current = tab.getAttribute('data-tab');
+    renderOffers();
+  }));
+})();
+</script>
+</body>
+</html>
