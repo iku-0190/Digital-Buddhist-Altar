@@ -1,0 +1,331 @@
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>デジタル仏壇 プロトタイプ v5（仏壇選択・購入リンク・位牌＋戒名／俗名・写真お供え）</title>
+<style>
+  :root { --bg:#f6f6f6; --card:#fff; --accent:#c59d5f; --muted:#666; --text:#222; }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans JP","Hiragino Sans","Yu Gothic",Meiryo,sans-serif}
+  header{position:sticky;top:0;background:var(--card);border-bottom:1px solid #eee;padding:12px 16px;z-index:10}
+  h1{font-size:16px;margin:0}
+  .container{max-width:560px;margin:0 auto;padding:16px}
+  .card{background:var(--card);border-radius:16px;padding:16px;border:1px solid #eee;box-shadow:0 4px 12px rgba(0,0,0,.04)}
+  .top{display:grid;grid-template-columns:96px 1fr;gap:12px;align-items:center}
+  .portrait{width:96px;height:128px;background:linear-gradient(180deg,#ddd,#bbb);border:3px solid #e5e5e5;border-radius:8px;display:grid;place-items:center;color:#555;font-size:14px}
+  .meta small{color:#666;display:block}
+  .btn{padding:10px 14px;border-radius:12px;border:1px solid var(--accent);background:var(--accent);color:#fff;font-weight:600;cursor:pointer}
+  .btn-outline{background:transparent;color:var(--accent)}
+  .toolbar{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+  .stage-wrap{margin-top:12px;border:1px dashed #e8e0cf;border-radius:16px;overflow:hidden;background:#fcfbf8}
+  .stage{position:relative;min-height:360px;display:grid;place-items:center}
+  .altar-bg{position:absolute;inset:0;background:#f7f3ea;display:block}
+  .altar-bg img{width:100%;height:100%;object-fit:cover;opacity:.9;filter:saturate(.95)}
+  .layer{position:absolute;inset:0;pointer-events:none}
+  .content{position:relative;z-index:2;width:100%;height:100%;display:grid;place-items:center;padding:16px;gap:10px}
+  .hint{color:#777;font-size:13px}
+  .offering-large{animation:pop .28s ease-out;text-align:center}
+  .offering-large img{max-width:70%;height:auto;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.12)}
+  .offering-large .label{margin-top:8px;font-weight:700;text-align:center}
+  /* 位牌 */
+  .ihai{position:absolute;bottom:28px;left:50%;transform:translateX(-50%);display:grid;place-items:center;pointer-events:none}
+  .ihai img{width:140px;height:auto;filter:saturate(.9)}
+  .ihai .kaimyo{position:absolute;top:38%;left:50%;transform:translate(-50%,-50%);writing-mode:vertical-rl;text-orientation:upright;font-weight:700;color:#111;letter-spacing:.1em;text-shadow:0 1px 2px rgba(0,0,0,.15)}
+  .ihai.small img{width:110px}
+  .ihai.large img{width:170px}
+  .ihai .zokumyo{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:12px;color:#333;opacity:.9;writing-mode:horizontal-tb;background:rgba(255,255,255,.35);padding:2px 6px;border-radius:6px}
+  /* Bottom Sheet */
+  .sheetWrap{position:fixed;inset:0;display:none;align-items:flex-end;justify-content:center;background:rgba(0,0,0,.35);z-index:50}
+  .sheet{width:100%;max-width:560px;background:var(--card);border-top-left-radius:20px;border-top-right-radius:20px;padding:16px;box-shadow:0 -8px 24px rgba(0,0,0,.2)}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .item{border:1px solid #eee;border-radius:12px;overflow:hidden;background:#fff;cursor:pointer}
+  .item .thumb{height:120px;background:#f3f3f3;display:grid;place-items:center}
+  .item .thumb img{width:100%;height:100%;object-fit:cover}
+  .item .meta{padding:10px}
+  .item .name{font-weight:700}
+  .tabbar{display:flex;gap:8px;margin-bottom:8px}
+  .chip{padding:8px 12px;border-radius:999px;border:1px solid #ddd;background:#fafafa;font-size:13px;cursor:pointer}
+  .chip.active{border-color:var(--accent);background:#fff7e8}
+  .row{display:flex;gap:8px;flex-wrap:wrap}
+  .note{color:#666;font-size:12px;text-align:center;margin-top:8px}
+  .purchase{padding:8px 12px;border-radius:10px;border:1px solid #ddd;background:#fafafa;text-decoration:none;color:#333;display:inline-block}
+</style>
+</head>
+<body>
+<header><h1>デジタル仏壇（v5）</h1></header>
+
+<div class="container">
+  <div class="card">
+    <div class="top">
+      <div class="portrait" aria-label="遺影（仮）">遺影（仮）</div>
+      <div class="meta">
+        <div style="font-weight:700;">山田 太郎（仮）</div>
+        <small>命日：2024年4月12日</small>
+
+        <div class="toolbar">
+          <button class="btn" id="btnAltar">仏壇を選ぶ</button>
+          <a class="btn btn-outline" id="btnAltarBuy" href="#" target="_blank" rel="noopener" aria-disabled="true">仏壇を購入</a>
+          <button class="btn" id="btnIhai">位牌を選ぶ</button>
+          <button class="btn btn-outline" id="btnOffer">お供えをする</button>
+          <button class="btn btn-outline" id="btnClear">片付ける</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="stage-wrap">
+      <div class="stage" id="stage" aria-live="polite">
+        <div class="altar-bg" id="altarBg">
+          <img id="altarBgImg" src="https://picsum.photos/seed/altarA/1200/800" alt="仮の仏壇写真">
+        </div>
+        <div class="layer" id="layer"></div>
+        <div class="content" id="content">
+          <div class="hint">ここに仏壇・位牌・お供えが表示されます</div>
+        </div>
+        <!-- 位牌レイヤー -->
+        <div class="ihai" id="ihai" style="display:none">
+          <img id="ihaiImg" src="" alt="位牌">
+          <div class="kaimyo" id="kaimyoText"></div>
+          <div class="zokumyo" id="zokumyoText" style="display:none"></div>
+        </div>
+      </div>
+    </div>
+    <p class="note">※ 画像はプレースホルダー（picsum.photos）を使用中。後で実写真・ECリンクに差し替え可能です。</p>
+  </div>
+</div>
+
+<!-- 仏壇シート -->
+<div class="sheetWrap" id="sheetAltar">
+  <div class="sheet">
+    <h3 style="margin:0 0 8px">仏壇を選ぶ</h3>
+    <div class="grid" id="altarGrid"></div>
+    <p class="note">選択すると背景の仏壇が切り替わります。「仏壇を購入」は選択中の仏壇の購入ページへリンクします（ダミー）。</p>
+  </div>
+</div>
+
+<!-- 位牌シート -->
+<div class="sheetWrap" id="sheetIhai">
+  <div class="sheet">
+    <h3 style="margin:0 0 8px">位牌を選ぶ（サイズ・写真）</h3>
+    <div class="row" style="margin-bottom:8px">
+      <button class="chip" data-size="small">小</button>
+      <button class="chip active" data-size="medium">中</button>
+      <button class="chip" data-size="large">大</button>
+    </div>
+    <div class="grid" id="ihaiGrid"></div>
+    <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
+      <input id="inputKaimyo" placeholder="戒名（縦書き）" style="flex:1;padding:10px;border:1px solid #ddd;border-radius:10px">
+      <input id="inputZokumyo" placeholder="俗名（任意）" style="flex:1;padding:10px;border:1px solid #ddd;border-radius:10px">
+      <button class="btn" id="btnApplyIhai">位牌に反映</button>
+    </div>
+    <p class="note">※ 文字は画面上で重ねて表示しています（実機ではフォントや配置を後で微調整可能）。</p>
+  </div>
+</div>
+
+<!-- お供えシート -->
+<div class="sheetWrap" id="sheetOffer">
+  <div class="sheet">
+    <div class="tabbar">
+      <button class="chip active" data-tab="free">無料お供え</button>
+      <button class="chip" data-tab="brand">企業お供え（サンプル）</button>
+    </div>
+    <h3 id="offerTitle" style="margin:0 0 8px">無料お供え</h3>
+    <div class="grid" id="offerGrid"></div>
+  </div>
+</div>
+
+<script>
+(function(){
+  // 仏壇候補（背景＋購入リンク）
+  const ALTARS = [
+    { id:'a', name:'仏壇A（明るめ木目）', img:'https://picsum.photos/seed/altarA/1200/800', buy:'https://example.com/butsudanA' },
+    { id:'b', name:'仏壇B（ダーク系）', img:'https://picsum.photos/seed/altarB/1200/800', buy:'https://example.com/butsudanB' },
+    { id:'c', name:'仏壇C（シンプル）', img:'https://picsum.photos/seed/altarC/1200/800', buy:'https://example.com/butsudanC' },
+    { id:'d', name:'仏壇D（金箔アクセント）', img:'https://picsum.photos/seed/altarD/1200/800', buy:'https://example.com/butsudanD' },
+  ];
+
+  // 位牌候補（写真プレースホルダー）
+  const IHAI = [
+    { id:'i1', name:'位牌・黒塗り', img:'https://picsum.photos/seed/ihai1/600/900' },
+    { id:'i2', name:'位牌・唐木調', img:'https://picsum.photos/seed/ihai2/600/900' },
+    { id:'i3', name:'位牌・シンプル', img:'https://picsum.photos/seed/ihai3/600/900' },
+  ];
+
+  // お供え（写真）
+  const FREE = [
+    { id:'flower',  name:'供花',   type:'無料', img:'https://picsum.photos/seed/flower/800/600' },
+    { id:'wagashi', name:'和菓子', type:'無料', img:'https://picsum.photos/seed/wagashi/800/600' },
+    { id:'incense', name:'お線香', type:'無料', img:'https://picsum.photos/seed/incense/800/600' },
+  ];
+  const BRAND = [
+    { id:'brand-flower',  name:'白菊の花束',   type:'○○フラワー', img:'https://picsum.photos/seed/brandflower/800/600',  url:'https://example.com/brandflower' },
+    { id:'brand-wagashi', name:'桜最中',       type:'△△和菓子舗', img:'https://picsum.photos/seed/brandwagashi/800/600', url:'https://example.com/brandwagashi' },
+    { id:'brand-incense', name:'香り立つお線香', type:'香道堂',     img:'https://picsum.photos/seed/brandincense/800/600', url:'https://example.com/brandincense' },
+  ];
+
+  // Elements
+  const altarBgImg = document.getElementById('altarBgImg');
+  const sheetAltar = document.getElementById('sheetAltar');
+  const altarGrid = document.getElementById('altarGrid');
+  const btnAltarBuy = document.getElementById('btnAltarBuy');
+
+  const ihai = document.getElementById('ihai');
+  const ihaiImg = document.getElementById('ihaiImg');
+  const kaimyoText = document.getElementById('kaimyoText');
+  const zokumyoText = document.getElementById('zokumyoText');
+  const sheetIhai = document.getElementById('sheetIhai');
+  const ihaiGrid = document.getElementById('ihaiGrid');
+  const inputKaimyo = document.getElementById('inputKaimyo');
+  const inputZokumyo = document.getElementById('inputZokumyo');
+
+  const sheetOffer = document.getElementById('sheetOffer');
+  const offerTitle = document.getElementById('offerTitle');
+  const offerGrid = document.getElementById('offerGrid');
+  const content = document.getElementById('content');
+
+  let currentAltar = ALTARS[0];
+  let currentIhaiSize = 'medium';
+  let currentOfferTab = 'free';
+
+  // --- 仏壇シート ---
+  function openAltarSheet(){
+    sheetAltar.style.display = 'flex';
+    renderAltars();
+  }
+  function closeAltarSheet(){ sheetAltar.style.display = 'none'; }
+  function renderAltars(){
+    altarGrid.innerHTML = '';
+    ALTARS.forEach(a => {
+      const el = document.createElement('button');
+      el.className = 'item';
+      el.innerHTML = `
+        <div class="thumb"><img src="${a.img}" alt="${a.name}"></div>
+        <div class="meta">
+          <div class="name">${a.name}</div>
+          <div class="note">購入ページ（ダミー）にリンク可</div>
+        </div>`;
+      el.addEventListener('click', () => {
+        currentAltar = a;
+        altarBgImg.src = a.img;
+        btnAltarBuy.href = a.buy;
+        btnAltarBuy.setAttribute('aria-disabled', 'false');
+        closeAltarSheet();
+      });
+      altarGrid.appendChild(el);
+    });
+  }
+
+  // --- 位牌シート ---
+  function openIhaiSheet(){
+    sheetIhai.style.display = 'flex';
+    renderIhai();
+  }
+  function closeIhaiSheet(){ sheetIhai.style.display = 'none'; }
+  function renderIhai(){
+    ihaiGrid.innerHTML = '';
+    IHAI.forEach(i => {
+      const el = document.createElement('button');
+      el.className = 'item';
+      el.innerHTML = `
+        <div class="thumb"><img src="${i.img}" alt="${i.name}"></div>
+        <div class="meta"><div class="name">${i.name}</div></div>`;
+      el.addEventListener('click', () => {
+        ihaiImg.src = i.img;
+        ihai.style.display = 'grid';
+        closeIhaiSheet();
+      });
+      ihaiGrid.appendChild(el);
+    });
+
+    // サイズチップ
+    document.querySelectorAll('#sheetIhai .chip').forEach(chip => {
+      chip.onclick = () => {
+        document.querySelectorAll('#sheetIhai .chip').forEach(c=>c.classList.remove('active'));
+        chip.classList.add('active');
+        currentIhaiSize = chip.getAttribute('data-size');
+        ihai.classList.remove('small','large');
+        if(currentIhaiSize==='small') ihai.classList.add('small');
+        if(currentIhaiSize==='large') ihai.classList.add('large');
+      };
+    });
+  }
+  document.getElementById('btnApplyIhai').addEventListener('click', () => {
+    const k = inputKaimyo.value.trim();
+    const z = inputZokumyo.value.trim();
+    kaimyoText.textContent = k || '';
+    zokumyoText.textContent = z || '';
+    zokumyoText.style.display = z ? 'block' : 'none';
+    closeIhaiSheet();
+  });
+
+  // --- お供えシート ---
+  function openOfferSheet(){
+    sheetOffer.style.display = 'flex';
+    renderOffers();
+  }
+  function closeOfferSheet(){ sheetOffer.style.display = 'none'; }
+  function renderOffers(){
+    offerGrid.innerHTML = '';
+    const list = currentOfferTab === 'free' ? FREE : BRAND;
+    offerTitle.textContent = currentOfferTab === 'free' ? '無料お供え' : '企業お供え（サンプル）';
+    list.forEach(o => {
+      const el = document.createElement('button');
+      el.className = 'item';
+      el.innerHTML = `
+        <div class="thumb"><img src="${o.img}" alt="${o.name}"></div>
+        <div class="meta"><div class="name">${o.name}</div></div>`;
+      el.addEventListener('click', () => {
+        placeOffering(o);
+        closeOfferSheet();
+      });
+      offerGrid.appendChild(el);
+    });
+    // タブ切り替え
+    document.querySelectorAll('#sheetOffer .chip').forEach(chip => {
+      chip.onclick = () => {
+        document.querySelectorAll('#sheetOffer .chip').forEach(c=>c.classList.remove('active'));
+        chip.classList.add('active');
+        currentOfferTab = chip.getAttribute('data-tab');
+        renderOffers();
+      };
+    });
+  }
+
+  function placeOffering(o){
+    // 既存のお供えの下に追加（複数表示）
+    const wrap = document.createElement('div');
+    wrap.className = 'offering-large';
+    wrap.style.pointerEvents = 'none';
+    wrap.innerHTML = `
+      <img src="${o.img}" alt="${o.name}">
+      <div class="label">あなたがお供えした「${o.name}」</div>`;
+    content.appendChild(wrap);
+  }
+
+  // 片付け（位牌は残す仕様）
+  function clearAll(){
+    content.innerHTML = '<div class="hint">ここに仏壇・位牌・お供えが表示されます</div>';
+  }
+
+  // Sheet 閉じる（背景タップ）
+  [sheetAltar, sheetIhai, sheetOffer].forEach(s => {
+    s.addEventListener('click', (e)=>{ if(e.target===s) s.style.display='none'; });
+  });
+
+  // Buttons
+  document.getElementById('btnAltar').addEventListener('click', openAltarSheet);
+  document.getElementById('btnIhai').addEventListener('click', openIhaiSheet);
+  document.getElementById('btnOffer').addEventListener('click', openOfferSheet);
+  document.getElementById('btnClear').addEventListener('click', clearAll);
+
+  // 初期状態：購入リンクはAに合わせる
+  (function init(){
+    const a = ALTARS[0];
+    btnAltarBuy.href = a.buy;
+    btnAltarBuy.setAttribute('aria-disabled','false');
+  })();
+})();
+</script>
+</body>
+</html>
