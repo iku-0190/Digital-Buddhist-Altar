@@ -1,0 +1,149 @@
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>デジタル仏壇 v7+（お供え統合／線香タイマー／鈴）</title>
+<style>
+  :root { --bg:#f6f6f6; --card:#fff; --accent:#c59d5f; --muted:#666; --text:#222; }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans JP","Hiragino Sans","Yu Gothic",Meiryo,sans-serif}
+  header{position:sticky;top:0;background:var(--card);border-bottom:1px solid #eee;padding:12px 16px;z-index:10;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  h1{font-size:16px;margin:0}
+  .container{max-width:900px;margin:0 auto;padding:12px}
+  .bar{display:flex;gap:8px;flex-wrap:wrap}
+  .btn{padding:10px 14px;border-radius:12px;border:1px solid var(--accent);background:var(--accent);color:#fff;font-weight:600;cursor:pointer}
+  .btn-outline{background:#fff;color:var(--accent)}
+  .btn-ghost{background:#fff;border:1px solid #ddd;color:#333}
+  .stage-wrap{margin-top:12px;border:1px dashed #e8e0cf;border-radius:16px;overflow:hidden;background:#fcfbf8}
+  .stage{position:relative;min-height:560px;display:block;touch-action:none}
+  .altar-bg{position:absolute;inset:0;background:#f7f3ea}
+  .altar-bg img{width:100%;height:100%;object-fit:cover;opacity:.9;filter:saturate(.95)}
+  .canvas{position:relative;z-index:2;width:100%;height:100%}
+  .hint{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);color:#777;font-size:13px;z-index:1;text-align:center}
+  /* Placable item */
+  .item{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) scale(1);user-select:none;touch-action:none}
+  .item img{display:block;max-width:260px;max-height:260px;width:220px;height:auto;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.12)}
+  .item .label{position:absolute;left:50%;bottom:-20px;transform:translateX(-50%);font-size:12px;color:#333;background:rgba(255,255,255,.6);padding:2px 8px;border-radius:999px}
+  .item .handle{position:absolute;right:-10px;bottom:-10px;width:22px;height:22px;border-radius:50%;background:#fff;border:2px solid var(--accent);display:grid;place-items:center;font-size:14px;color:var(--accent);cursor:nwse-resize}
+  .item.selected{outline:2px dashed var(--accent);outline-offset:4px}
+  .stack{position:absolute;right:8px;top:8px;display:flex;gap:6px;z-index:5}
+  .stack .chip{padding:6px 10px;border:1px solid #ddd;border-radius:999px;background:#fff;font-size:12px;cursor:pointer}
+  .stack .chip[disabled]{opacity:.35;cursor:not-allowed}
+  .stack .chip.active{border-color:var(--accent);background:#fff7e8}
+  .note{color:#666;font-size:12px;text-align:center;margin:8px 0 18px}
+  /* Bottom sheet */
+  .sheetWrap{position:fixed;inset:0;display:none;align-items:flex-end;justify-content:center;background:rgba(0,0,0,.35);z-index:50}
+  .sheet{width:100%;max-width:900px;background:var(--card);border-top-left-radius:20px;border-top-right-radius:20px;padding:16px;box-shadow:0 -8px 24px rgba(0,0,0,.2)}
+  .grid{display:grid;grid-template-columns:repeat(3, 1fr);gap:12px}
+  @media (min-width:720px){ .grid{grid-template-columns:repeat(6, 1fr);} }
+  .entry{border:1px solid #eee;border-radius:12px;overflow:hidden;background:#fff;cursor:pointer;text-align:center}
+  .entry .thumb{height:100px;background:#f3f3f3}
+  .entry .thumb img{width:100%;height:100%;object-fit:cover}
+  .entry .name{padding:8px 6px;font-size:12px;font-weight:700}
+  .entry .type{font-size:11px;color:#777;padding:0 6px 8px}
+  .catalog-tabs{display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap}
+  .chip{padding:8px 12px;border-radius:999px;border:1px solid #ddd;background:#fafafa;font-size:13px;cursor:pointer}
+  .chip.active{border-color:var(--accent);background:#fff7e8}
+  /* Incense (smoke) */
+  .incense-layer{position:absolute;left:0;right:0;bottom:0;top:0;pointer-events:none;z-index:3}
+  .incense{position:absolute;left:50%;bottom:28px;transform:translateX(-50%);width:8px;height:18px;background:linear-gradient(180deg,#6b4d2e,#3b2a18);border-radius:2px;box-shadow:0 2px 4px rgba(0,0,0,.2)}
+  .incense::after{content:"";position:absolute;left:50%;top:-6px;transform:translateX(-50%);width:6px;height:6px;background:radial-gradient(circle,#ffcf6d,#ff8a00);border-radius:50%;filter:blur(.3px)}
+  .smoke{position:absolute;left:50%;bottom:42px;width:12px;height:12px;border-radius:50%;background:rgba(180,180,180,.35);filter:blur(1px);animation:smoke 2.4s linear forwards}
+  @keyframes smoke { 0%{transform:translate(-50%,0) scale(1);opacity:.45} 60%{transform:translate(-50%,-70px) scale(1.3);opacity:.25} 100%{transform:translate(-50%,-120px) scale(1.6);opacity:0} }
+  .timerTag{position:absolute;left:50%;bottom:0;transform:translate(-50%, 8px);font-size:12px;background:rgba(255,255,255,.8);padding:2px 8px;border-radius:999px;border:1px solid #eee;color:#333}
+</style>
+</head>
+<body>
+<header>
+  <h1>デジタル仏壇 v7+</h1>
+  <div class="bar">
+    <button class="btn" id="btnAltar">仏壇を選ぶ</button>
+    <a class="btn btn-outline" id="btnBuy" href="#" target="_blank" rel="noopener" aria-disabled="true">仏壇を購入</a>
+    <button class="btn btn-outline" id="btnCatalog">カタログ（仏具・お供え）</button>
+    <button class="btn-ghost" id="btnEdit">編集モード：OFF</button>
+    <button class="btn-ghost" id="btnClear">片付ける（置いたもの）</button>
+    <button class="btn" id="btnIncense30">線香をあげる（30秒）</button>
+    <button class="btn" id="btnIncense60">線香をあげる（1分）</button>
+    <button class="btn-outline" id="btnRing">鈴を鳴らす</button>
+  </div>
+</header>
+
+<div class="container">
+  <div class="stage-wrap">
+    <div class="stage" id="stage">
+      <div class="altar-bg"><img id="altarBg" src="https://picsum.photos/seed/altarA/1600/1000" alt="仮の仏壇写真"></div>
+      <div class="canvas" id="canvas"></div>
+      <div class="incense-layer" id="incenseLayer" aria-live="polite"></div>
+      <div class="hint" id="hint">「仏壇を選ぶ」→「カタログ」で配置。<br>線香は「30秒／1分」ボタンで焚けて、時間で自動で消えます。<br>鈴ボタンでチーンと鳴らせます。</div>
+      <div class="stack">
+        <span class="chip" id="buySelected" disabled>購入ページ</span>
+        <span class="chip" id="front">最前面へ</span>
+        <span class="chip" id="back">最背面へ</span>
+        <span class="chip" id="remove">削除</span>
+      </div>
+    </div>
+  </div>
+  <p class="note">※ 写真はプレースホルダー（picsum.photos）。線香は「片付ける」では消えません（時間で自動消滅）。</p>
+</div>
+
+<div class="sheetWrap" id="sheetAltar"><div class="sheet"><h3 style="margin:0 0 8px">仏壇を選ぶ</h3><div class="grid" id="altarGrid"></div><p class="note">選択で背景が切り替わり、購入ボタンのリンクも更新されます（ダミー）。</p></div></div>
+
+<div class="sheetWrap" id="sheetCatalog"><div class="sheet">
+  <div class="catalog-tabs" id="tabs">
+    <button class="chip active" data-cat="main">本尊・掛け軸・位牌</button>
+    <button class="chip" data-cat="vessels">供物・器類</button>
+    <button class="chip" data-cat="bell">おりん・火立・香炉</button>
+    <button class="chip" data-cat="tools">道具（マッチ消／線香差）</button>
+    <button class="chip" data-cat="offering">お供え（花・果物・菓子・飲料・線香）</button>
+  </div>
+  <div class="grid" id="catalogGrid"></div>
+</div></div>
+
+<script>
+(function(){
+  const ALTARS=[{id:"a",name:"仏壇A（明るめ木目）",img:"https://picsum.photos/seed/altarA/1600/1000",buy:"https://example.com/butsudanA"},{id:"b",name:"仏壇B（ダーク系）",img:"https://picsum.photos/seed/altarB/1600/1000",buy:"https://example.com/butsudanB"},{id:"c",name:"仏壇C（シンプル）",img:"https://picsum.photos/seed/altarC/1600/1000",buy:"https://example.com/butsudanC"},{id:"d",name:"仏壇D（金箔アクセント）",img:"https://picsum.photos/seed/altarD/1600/1000",buy:"https://example.com/butsudanD"}];
+  const CATALOG={main:[{id:"gohonzon",name:"御本尊",img:"https://picsum.photos/seed/gohonzon/600/800"},{id:"kakejiku",name:"掛け軸",img:"https://picsum.photos/seed/kakejiku/600/800"},{id:"ihai-s",name:"位牌（小）",img:"https://picsum.photos/seed/ihaiS/400/600"},{id:"ihai-m",name:"位牌（中）",img:"https://picsum.photos/seed/ihaiM/500/750"},{id:"ihai-l",name:"位牌（大）",img:"https://picsum.photos/seed/ihaiL/600/900"}],vessels:[{id:"buppanki",name:"仏飯器",img:"https://picsum.photos/seed/buppanki/800/600"},{id:"chayuuki",name:"茶湯器",img:"https://picsum.photos/seed/chayuuki/800/600"},{id:"hanadate",name:"花立",img:"https://picsum.photos/seed/hanadate/800/600"},{id:"takatsuki",name:"高月",img:"https://picsum.photos/seed/takatsuki/800/600"},{id:"buppanzen",name:"仏飯膳",img:"https://picsum.photos/seed/buppanzen/800/600"}],bell:[{id:"orin",name:"おりん",img:"https://picsum.photos/seed/orin/800/600"},{id:"rinbo",name:"リン棒",img:"https://picsum.photos/seed/rinbo/800/600"},{id:"hidate",name:"火立",img:"https://picsum.photos/seed/hidate/800/600"},{id:"koro",name:"香炉",img:"https://picsum.photos/seed/koro/800/600"}],tools:[{id:"matchkeshi",name:"マッチ消",img:"https://picsum.photos/seed/matchkeshi/800/600"},{id:"senkosashi-a",name:"線香差（A）",img:"https://picsum.photos/seed/senkosashiA/800/600"},{id:"senkosashi-b",name:"線香差（B）",img:"https://picsum.photos/seed/senkosashiB/800/600"},{id:"senkosashi-c",name:"線香差（C）",img:"https://picsum.photos/seed/senkosashiC/800/600"}],offering:[{id:"flower-white",name:"仏花（白）",img:"https://picsum.photos/seed/flower1/600/600"},{id:"flower-color",name:"仏花（彩）",img:"https://picsum.photos/seed/flower2/600/600"},{id:"fruit-mikan",name:"みかん",img:"https://picsum.photos/seed/fruit1/600/600"},{id:"fruit-grape",name:"ぶどう",img:"https://picsum.photos/seed/fruit2/600/600"},{id:"fruit-apple",name:"りんご",img:"https://picsum.photos/seed/fruit3/600/600"},{id:"wagashi",name:"和菓子",img:"https://picsum.photos/seed/sweets1/600/600"},{id:"dango",name:"団子",img:"https://picsum.photos/seed/sweets2/600/600"},{id:"manju",name:"まんじゅう",img:"https://picsum.photos/seed/sweets3/600/600"},{id:"green-tea",name:"緑茶",img:"https://picsum.photos/seed/drink1/600/600"},{id:"bottle-juice",name:"ジュース（瓶）",img:"https://picsum.photos/seed/drink2/600/600"},{id:"can-coffee",name:"コーヒー缶",img:"https://picsum.photos/seed/drink3/600/600"},{id:"incense-bundle",name:"線香束",img:"https://picsum.photos/seed/insence1/600/600"},{id:"incense-set",name:"香皿セット",img:"https://picsum.photos/seed/insence2/600/600"},{id:"brand-monaka",name:"桜最中（コラボ）",img:"https://picsum.photos/seed/brandwagashi/600/600",url:"https://example.com/collab-monaka"},{id:"brand-juice",name:"瓶ジュース（コラボ）",img:"https://picsum.photos/seed/brandjuice/600/600",url:"https://example.com/collab-juice"},{id:"brand-cheesecake",name:"チーズケーキ（コラボ）",img:"https://picsum.photos/seed/brandcake/600/600",url:"https://example.com/collab-cheesecake"}]};
+
+  const stage=document.getElementById("stage"),canvas=document.getElementById("canvas"),incenseLayer=document.getElementById("incenseLayer"),hint=document.getElementById("hint"),btnAltar=document.getElementById("btnAltar"),sheetAltar=document.getElementById("sheetAltar"),altarGrid=document.getElementById("altarGrid"),altarBg=document.getElementById("altarBg"),btnBuy=document.getElementById("btnBuy"),btnCatalog=document.getElementById("btnCatalog"),sheetCatalog=document.getElementById("sheetCatalog"),catalogGrid=document.getElementById("catalogGrid"),tabs=document.getElementById("tabs");let currentCat="main";const btnEdit=document.getElementById("btnEdit"),btnClear=document.getElementById("btnClear"),front=document.getElementById("front"),back=document.getElementById("back"),remove=document.getElementById("remove"),buySelected=document.getElementById("buySelected"),btnIncense30=document.getElementById("btnIncense30"),btnIncense60=document.getElementById("btnIncense60"),btnRing=document.getElementById("btnRing");let editMode=false,selected=null,zCounter=10;
+
+  btnAltar.addEventListener("click",()=>{sheetAltar.style.display="flex";renderAltars();});sheetAltar.addEventListener("click",e=>{if(e.target===sheetAltar)sheetAltar.style.display="none";});
+  function renderAltars(){altarGrid.innerHTML="";ALTARS.forEach(a=>{const el=document.createElement("button");el.className="entry";el.innerHTML=`<div class="thumb"><img src="${a.img}" alt="${a.name}"></div><div class="name">${a.name}</div><div class="type">購入リンク更新</div>`;el.addEventListener("click",()=>{altarBg.src=a.img;btnBuy.href=a.buy;btnBuy.setAttribute("aria-disabled","false");sheetAltar.style.display="none";});altarGrid.appendChild(el);});}
+
+  btnCatalog.addEventListener("click",()=>{sheetCatalog.style.display="flex";renderCatalog();});sheetCatalog.addEventListener("click",e=>{if(e.target===sheetCatalog)sheetCatalog.style.display="none";});
+  tabs.addEventListener("click",e=>{if(e.target.matches(".chip")){tabs.querySelectorAll(".chip").forEach(c=>c.classList.remove("active"));e.target.classList.add("active");currentCat=e.target.dataset.cat;renderCatalog();}});
+  function renderCatalog(){catalogGrid.innerHTML="";(CATALOG[currentCat]||[]).forEach(item=>{const el=document.createElement("button");el.className="entry";el.innerHTML=`<div class="thumb"><img src="${item.img}" alt="${item.name}"></div><div class="name">${item.name}</div><div class="type">${item.url?"購入ページあり":"タップで追加"}</div>`;el.addEventListener("click",()=>{addItem(item);sheetCatalog.style.display="none";});catalogGrid.appendChild(el);});}
+
+  function addItem(data){hint.style.display="none";const el=document.createElement("div");el.className="item";el.style.zIndex=(++zCounter).toString();el.dataset.url=data.url||"";el.innerHTML=`<img src="${data.img}" alt="${data.name}"><div class="label">${data.name}</div><div class="handle">↘</div>`;canvas.appendChild(el);makeInteractive(el);select(el);}
+
+  btnEdit.addEventListener("click",()=>{editMode=!editMode;btnEdit.textContent="編集モード："+(editMode?"ON":"OFF");canvas.querySelectorAll(".item .handle").forEach(h=>h.style.display=editMode?"grid":"none");});
+  canvas.addEventListener("pointerdown",e=>{if(e.target===canvas){select(null);}});
+  front.addEventListener("click",()=>{if(selected){selected.style.zIndex=(++zCounter).toString();}});
+  back.addEventListener("click",()=>{if(selected){selected.style.zIndex="1";}});
+  remove.addEventListener("click",()=>{if(selected){selected.remove();setSelected(null);}});
+  buySelected.addEventListener("click",()=>{if(!selected)return;const url=selected.dataset.url;if(url)window.open(url,"_blank");});
+  function setBuyChip(el){const url=el&&el.dataset?el.dataset.url:"";url?buySelected.removeAttribute("disabled"):buySelected.setAttribute("disabled","");}
+  btnClear.addEventListener("click",()=>{canvas.innerHTML="";hint.style.display="block";setSelected(null);});
+
+  function makeInteractive(el){const img=el.querySelector("img"),handle=el.querySelector(".handle");handle.style.display=editMode?"grid":"none";let dragging=false,startX=0,startY=0,baseLeft=0,baseTop=0;el.addEventListener("pointerdown",e=>{if(!editMode){select(el);return}if(e.target===handle)return;dragging=true;el.setPointerCapture(e.pointerId);startX=e.clientX;startY=e.clientY;const rect=el.getBoundingClientRect(),parent=canvas.getBoundingClientRect();baseLeft=rect.left-parent.left;baseTop=rect.top-parent.top;select(el);e.preventDefault();});el.addEventListener("pointermove",e=>{if(!dragging)return;const dx=e.clientX-startX,dy=e.clientY-startY;el.style.left=baseLeft+dx+"px";el.style.top=baseTop+dy+"px";el.style.transform="translate(0,0)";});el.addEventListener("pointerup",()=>{dragging=false;});el.addEventListener("pointercancel",()=>{dragging=false;});let resizing=false,startW=0,startH=0,rStartX=0,rStartY=0;handle.addEventListener("pointerdown",e=>{if(!editMode)return;resizing=true;handle.setPointerCapture(e.pointerId);rStartX=e.clientX;rStartY=e.clientY;startW=img.getBoundingClientRect().width;startH=img.getBoundingClientRect().height;select(el);e.preventDefault();e.stopPropagation();});handle.addEventListener("pointermove",e=>{if(!resizing)return;const dx=e.clientX-rStartX,ratio=startW/startH;let newW=Math.max(40,startW+dx);img.style.width=newW+"px";img.style.height=newW/ratio+"px";});handle.addEventListener("pointerup",()=>{resizing=false;});handle.addEventListener("pointercancel",()=>{resizing=false;});el.addEventListener("click",()=>{select(el);});}
+  function setSelected(el){selected=el;setBuyChip(el);}
+  function select(el){canvas.querySelectorAll(".item").forEach(i=>i.classList.remove("selected"));if(el)el.classList.add("selected");setSelected(el);}
+
+  // 線香（タイマーで自動消える）
+  document.getElementById("btnIncense30").addEventListener("click",()=>lightIncense(30));
+  document.getElementById("btnIncense60").addEventListener("click",()=>lightIncense(60));
+  function lightIncense(seconds){const holder=document.createElement("div");holder.className="incense";holder.style.left="50%";incenseLayer.appendChild(holder);const tag=document.createElement("div");tag.className="timerTag";tag.textContent=seconds+"秒";holder.appendChild(tag);const smokeInterval=setInterval(()=>{const s=document.createElement("div");s.className="smoke";const drift=(Math.random()*36-18);s.style.transform="translate("+drift+"px,0)";holder.appendChild(s);setTimeout(()=>{s.remove();},2500);},550);let remain=seconds;const tick=setInterval(()=>{remain-=1;if(remain>=0)tag.textContent=remain+"秒";},1000);setTimeout(()=>{clearInterval(smokeInterval);clearInterval(tick);holder.style.transition="opacity .6s ease";holder.style.opacity="0";setTimeout(()=>{holder.remove();},700);},seconds*1000);}
+
+  // 鈴（WebAudio）
+  let audioCtx=null;function getCtx(){if(!audioCtx)audioCtx=new (window.AudioContext||window.webkitAudioContext)();return audioCtx;}
+  document.getElementById("btnRing").addEventListener("click",ringBell);
+  function ringBell(){const ctx=getCtx(),now=ctx.currentTime,freqs=[740,1480,2220,2960],gains=[0.8,0.35,0.18,0.12];freqs.forEach((f,i)=>{const osc=ctx.createOscillator(),gain=ctx.createGain();osc.type="sine";osc.frequency.value=f;gain.gain.setValueAtTime(.0001,now);gain.gain.exponentialRampToValueAtTime(gains[i],now+.01);gain.gain.exponentialRampToValueAtTime(.0001,now+2.2+i*.1);osc.connect(gain).connect(ctx.destination);osc.frequency.exponentialRampToValueAtTime(f*.998,now+.2);osc.frequency.exponentialRampToValueAtTime(f*1.002,now+.6);osc.start(now);osc.stop(now+2.6+i*.1);});ripple();}
+  function ripple(){const dot=document.createElement("div");dot.style.position="absolute";dot.style.left="50%";dot.style.top="30%";dot.style.width="12px";dot.style.height="12px";dot.style.borderRadius="50%";dot.style.border="2px solid rgba(197,157,95,.9)";dot.style.transform="translate(-50%,-50%)";dot.style.opacity="1";dot.style.zIndex="6";stage.appendChild(dot);dot.animate([{transform:"translate(-50%,-50%) scale(1)",opacity:1},{transform:"translate(-50%,-50%) scale(2.2)",opacity:0}],{duration:650,easing:"ease-out"}).onfinish=()=>dot.remove();}
+
+  // 初期
+  btnBuy.href=ALTARS[0].buy;btnBuy.setAttribute("aria-disabled","false");
+})();
+</script>
+</body>
+</html>
