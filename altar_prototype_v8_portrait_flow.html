@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>デジタル仏壇 v8（遺影：申請→審査中→承認の擬似体験）</title>
+<style>
+  :root{--bg:#f6f6f6;--card:#fff;--accent:#c59d5f;--text:#222;--muted:#777}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans JP","Hiragino Sans","Yu Gothic",Meiryo,sans-serif}
+  header{position:sticky;top:0;background:var(--card);border-bottom:1px solid #eee;padding:12px 16px;z-index:10;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+  h1{margin:0;font-size:16px}
+  .btn{padding:10px 14px;border-radius:12px;border:1px solid var(--accent);background:var(--accent);color:#fff;font-weight:700;cursor:pointer}
+  .btn-outline{background:#fff;color:var(--accent)}
+  .btn-ghost{background:#fff;color:#333;border:1px solid #ddd}
+  .container{max-width:980px;margin:0 auto;padding:16px}
+  .stage{position:relative;border:1px dashed #e8e0cf;border-radius:16px;overflow:hidden;background:#fcfbf8;min-height:560px}
+  .altar-bg{position:absolute;inset:0}
+  .altar-bg img{width:100%;height:100%;object-fit:cover;opacity:.9;filter:saturate(.95)}
+  .portrait-wrap{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(78vw,380px);height:calc(min(78vw,380px)*1.25);display:grid;place-items:center;z-index:2}
+  .frame{position:relative;width:100%;height:100%;border:8px solid #d8c9a5;border-radius:14px;background:linear-gradient(#fefefe,#f7f3ea)}
+  .frame::after{content:"";position:absolute;inset:0;border:2px solid rgba(0,0,0,.06);border-radius:10px;pointer-events:none}
+  .portrait{position:absolute;inset:12px;border-radius:8px;background:#eee;overflow:hidden;display:grid;place-items:center}
+  .portrait img{width:100%;height:100%;object-fit:cover}
+  .silhouette{width:50%;opacity:.35;filter:grayscale(100%)}
+  .status{position:absolute;left:12px;top:12px;background:#fff;padding:4px 10px;border-radius:999px;border:1px solid #eee;font-size:12px;color:#333}
+  .badge{font-weight:800}
+  .status.pending{background:#fff7e8;border-color:#f5d9a9}
+  .status.approved{background:#e9f8ee;border-color:#bde5c8}
+  .overlay{position:absolute;inset:12px;background:rgba(255,255,255,.7);display:none;align-items:center;justify-content:center;font-weight:700;color:#333;border-radius:8px}
+  .spinner{width:22px;height:22px;border:3px solid #bbb;border-top-color:#7a7a7a;border-radius:50%;animation:sp 1s linear infinite;margin-right:8px}
+  @keyframes sp{to{transform:rotate(360deg)}}
+  .note{color:#666;font-size:12px;margin:10px 0 0}
+  .panel{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+  .panel small{color:#666}
+  .admin{display:flex;gap:8px;align-items:center}
+  .admin .btn{padding:8px 12px}
+  .admin-tag{font-size:12px;color:#555;background:#fff;border:1px dashed #bbb;border-radius:999px;padding:4px 8px}
+  .sheetWrap{position:fixed;inset:0;display:none;align-items:flex-end;justify-content:center;background:rgba(0,0,0,.35);z-index:50}
+  .sheet{width:100%;max-width:980px;background:var(--card);border-top-left-radius:20px;border-top-right-radius:20px;padding:16px;box-shadow:0 -8px 24px rgba(0,0,0,.2)}
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+  @media(min-width:720px){.grid{grid-template-columns:repeat(6,1fr)}}
+  .entry{border:1px solid #eee;border-radius:12px;overflow:hidden;background:#fff;cursor:pointer;text-align:center}
+  .entry .thumb{height:100px;background:#f3f3f3}
+  .entry .thumb img{width:100%;height:100%;object-fit:cover}
+  .entry .name{padding:8px 6px;font-size:12px;font-weight:700}
+  .consents{margin:12px 0;display:grid;gap:8px}
+  .consents label{display:flex;gap:8px;align-items:flex-start;font-size:14px}
+  .fileRow{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:10px 0}
+  .actions{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
+</style>
+</head>
+<body>
+<header>
+  <h1>デジタル仏壇 v8（遺影フロー：A案）</h1>
+  <button class="btn" id="btnApply">遺影を申請</button>
+  <div class="admin">
+    <span class="admin-tag">運営（擬似）</span>
+    <button class="btn-outline" id="btnApprove" disabled>承認</button>
+    <button class="btn-ghost" id="btnReject" disabled>却下</button>
+    <small id="adminHint">※ 申請が来ると有効化</small>
+  </div>
+</header>
+
+<div class="container">
+  <div class="stage">
+    <div class="altar-bg"><img src="https://picsum.photos/seed/altarA/1600/1000" alt="仮の仏壇背景"></div>
+    <div class="portrait-wrap" aria-live="polite">
+      <div class="frame">
+        <div class="portrait" id="portrait">
+          <img class="silhouette" id="silhouette" src="https://upload.wikimedia.org/wikipedia/commons/8/89/Portrait_Placeholder.png" alt="シルエット（未申請）">
+        </div>
+        <div class="overlay" id="overlay"><div class="spinner"></div>審査中...</div>
+        <div class="status" id="status"><span class="badge">未申請</span> / アップロードして承認を待ちます</div>
+      </div>
+    </div>
+  </div>
+  <p class="note">※ 擬似体験：画像はローカル選択またはサンプル。申請→審査中→運営の「承認/却下」ボタンで遷移します。<br>
+  ※ 本番想定：サーバー側で保管・審査し、承認後のみアプリに配信します（著名人/第三者無断利用は不可）。</p>
+</div>
+
+<div class="sheetWrap" id="sheetApply">
+  <div class="sheet">
+    <h3 style="margin:0 0 12px">遺影の申請</h3>
+    <p style="margin:0 0 8px;color:#444">どちらかを選んでください：</p>
+    <div class="fileRow">
+      <input type="file" id="fileInput" accept="image/*">
+      <span style="font-size:12px;color:#666">※ 推奨比率 4:5／10MB以下</span>
+    </div>
+    <p style="margin:12px 0 6px;color:#444">サンプルから選ぶ（擬似用）</p>
+    <div class="grid" id="sampleGrid"></div>
+
+    <div class="consents">
+      <label><input type="checkbox" id="c1">私はこの写真のアップロード・利用に必要な権限を有しています。</label>
+      <label><input type="checkbox" id="c2">被写体（故人）に関わる関係者の同意を取得済みです。</label>
+      <label><input type="checkbox" id="c3">著名人/第三者の無断利用、権利侵害画像ではありません。</label>
+    </div>
+    <div class="actions">
+      <button class="btn-ghost" id="btnCancel">やめる</button>
+      <button class="btn" id="btnSubmit" disabled>申請する</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const sheet = document.getElementById('sheetApply');
+  const btnApply = document.getElementById('btnApply');
+  const btnCancel = document.getElementById('btnCancel');
+  const btnSubmit = document.getElementById('btnSubmit');
+  const fileInput = document.getElementById('fileInput');
+  const sampleGrid = document.getElementById('sampleGrid');
+  const c1=document.getElementById('c1'), c2=document.getElementById('c2'), c3=document.getElementById('c3');
+  const status = document.getElementById('status');
+  const overlay = document.getElementById('overlay');
+  const portrait = document.getElementById('portrait');
+  const silhouette = document.getElementById('silhouette');
+  const btnApprove = document.getElementById('btnApprove');
+  const btnReject = document.getElementById('btnReject');
+  const adminHint = document.getElementById('adminHint');
+
+  let chosenURL = null;
+  let pending = false;
+  let approved = false;
+
+  const SAMPLES = [
+    'https://picsum.photos/seed/portraitA/600/750',
+    'https://picsum.photos/seed/portraitB/600/750',
+    'https://picsum.photos/seed/portraitC/600/750',
+    'https://picsum.photos/seed/portraitD/600/750',
+    'https://picsum.photos/seed/portraitE/600/750',
+    'https://picsum.photos/seed/portraitF/600/750'
+  ];
+  function renderSamples(){
+    sampleGrid.innerHTML='';
+    SAMPLES.forEach((url,i)=>{
+      const el=document.createElement('button');
+      el.className='entry';
+      el.innerHTML = '<div class="thumb"><img src="'+url+'" alt="サンプル'+(i+1)+'"></div><div class="name">サンプル'+(i+1)+'</div>';
+      el.addEventListener('click',()=>{
+        chosenURL = url;
+        updateSubmitButton();
+        highlightChoice(el);
+      });
+      sampleGrid.appendChild(el);
+    });
+  }
+  function highlightChoice(el){
+    sampleGrid.querySelectorAll('.entry').forEach(e=>e.style.outline='none');
+    el.style.outline='2px solid var(--accent)';
+  }
+
+  btnApply.addEventListener('click', ()=>{
+    if (pending){ alert('現在、審査中です。承認または却下後に再申請してください。'); return; }
+    chosenURL = null;
+    fileInput.value = '';
+    [c1,c2,c3].forEach(c=>c.checked=false);
+    btnSubmit.disabled = true;
+    renderSamples();
+    sheet.style.display='flex';
+  });
+  btnCancel.addEventListener('click', ()=>{ sheet.style.display='none'; });
+  sheet.addEventListener('click', (e)=>{ if(e.target===sheet) sheet.style.display='none'; });
+
+  fileInput.addEventListener('change', (e)=>{
+    const f=e.target.files && e.target.files[0];
+    if(!f) { chosenURL=null; updateSubmitButton(); return;}
+    const url = URL.createObjectURL(f);
+    chosenURL = url;
+    sampleGrid.querySelectorAll('.entry').forEach(e=>e.style.outline='none');
+    updateSubmitButton();
+  });
+
+  [c1,c2,c3].forEach(cb=>cb.addEventListener('change', updateSubmitButton));
+  function updateSubmitButton(){
+    btnSubmit.disabled = !(chosenURL && c1.checked && c2.checked && c3.checked);
+  }
+
+  btnSubmit.addEventListener('click', ()=>{
+    if(btnSubmit.disabled) return;
+    sheet.style.display='none';
+    pending = true; approved = false;
+    overlay.style.display='flex';
+    status.classList.remove('approved'); status.classList.add('pending');
+    status.innerHTML = '<span class="badge">審査中</span> / 運営の承認をお待ちください';
+    btnApprove.disabled = false;
+    btnReject.disabled = false;
+    adminHint.textContent = '申請を承認／却下できます';
+  });
+
+  btnApprove.addEventListener('click', ()=>{
+    if(!pending) return;
+    applyPortrait(chosenURL);
+    approved = true; pending = false;
+    overlay.style.display='none';
+    status.classList.remove('pending'); status.classList.add('approved');
+    status.innerHTML = '<span class="badge">承認済み</span> / 遺影を表示しています';
+    btnApprove.disabled = true;
+    btnReject.disabled = true;
+    adminHint.textContent = '新たな申請が来ると有効化されます';
+  });
+  btnReject.addEventListener('click', ()=>{
+    if(!pending) return;
+    chosenURL = null;
+    approved = false; pending = false;
+    overlay.style.display='none';
+    status.classList.remove('pending','approved');
+    status.innerHTML = '<span class="badge">未申請</span> / アップロードして承認を待ちます';
+    clearPortrait();
+    btnApprove.disabled = true;
+    btnReject.disabled = true;
+    adminHint.textContent = '※ 申請が来ると有効化';
+  });
+
+  function applyPortrait(url){
+    clearPortrait();
+    const img = document.createElement('img');
+    img.src = url;
+    img.alt = '承認済みの遺影';
+    portrait.appendChild(img);
+  }
+  function clearPortrait(){
+    portrait.innerHTML = '';
+    portrait.appendChild(silhouette);
+  }
+})();
+</script>
+</body>
+</html>
