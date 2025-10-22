@@ -1,0 +1,850 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>デジタル仏壇 v11.1（プロフィール自由入力）</title>
+<style>
+:root{--bg:#f6f6f6;--card:#fff;--accent:#c59d5f;--text:#222;--muted:#777;--safe: env(safe-area-inset-bottom)}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans JP","Hiragino Sans","Yu Gothic",Meiryo,sans-serif;padding-bottom:80px}
+header{position:sticky;top:0;background:var(--card);border-bottom:1px solid #eee;padding:10px 12px;z-index:20}
+h1{margin:0;font-size:16px}
+.nav{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;align-items:center}
+.tab{padding:8px 12px;border-radius:999px;border:1px solid #ddd;background:#fff;color:#333;cursor:pointer;font-weight:600}
+.tab.active{border-color:var(--accent);background:#fff7e8}
+.step{margin-left:auto;display:flex;gap:6px;align-items:center}
+.btn{padding:10px 14px;border-radius:12px;border:1px solid var(--accent);background:var(--accent);color:#fff;font-weight:700;cursor:pointer}
+.btn-outline{background:#fff;color:var(--accent)}
+.btn-ghost{background:#fff;border:1px solid #ddd;color:#333}
+select.profile{padding:8px 12px;border-radius:12px;border:1px solid #ddd;background:#fff;min-width:140px}
+.container{max-width:1000px;margin:0 auto;padding:12px}
+.page{display:none}
+.page.active{display:block}
+.note{color:#666;font-size:12px;margin:8px 0}
+.stage{position:relative;border:1px dashed #e8e0cf;border-radius:16px;overflow:hidden;background:#fcfbf8;min-height:520px}
+.altar-bg{position:absolute;inset:0}
+.altar-bg img{width:100%;height:100%;object-fit:cover;opacity:.9;filter:saturate(.95)}
+.portrait-wrap{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(78vw,360px);height:calc(min(78vw,360px)*1.25);display:grid;place-items:center;z-index:2}
+.frame{position:relative;width:100%;height:100%;border-radius:14px;background:linear-gradient(#fefefe,#f7f3ea);border:8px solid #d8c9a5}
+.frame.black{border-color:#111;background:#f9f9f9}
+.frame.silver{border:10px solid #cfcfcf;background:linear-gradient(#fafafa,#f1f1f1)}
+.frame.wood{border:10px solid #8b5a2b;background:linear-gradient(#fefefe,#f7f3ea)}
+.frame::after{content:"";position:absolute;inset:0;border:2px solid rgba(0,0,0,.06);border-radius:10px;pointer-events:none}
+.portrait{position:absolute;inset:12px;border-radius:8px;background:#eee;overflow:hidden;display:grid;place-items:center}
+.portrait img{width:100%;height:100%;object-fit:cover}
+.silhouette{width:50%;opacity:.35;filter:grayscale(100%)}
+.status{position:absolute;left:12px;top:12px;background:#fff;padding:4px 10px;border-radius:999px;border:1px solid #eee;font-size:12px}
+.badge{font-weight:800}
+.status.pending{background:#fff7e8;border-color:#f5d9a9}
+.status.approved{background:#e9f8ee;border-color:#bde5c8}
+.overlay{position:absolute;inset:12px;background:rgba(255,255,255,.7);display:none;align-items:center;justify-content:center;font-weight:700;color:#333;border-radius:8px}
+.spinner{width:22px;height:22px;border:3px solid #bbb;border-top-color:#7a7a7a;border-radius:50%;animation:sp 1s linear infinite;margin-right:8px}
+@keyframes sp{to{transform:rotate(360deg)}}
+.panel{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.admin{display:flex;gap:8px;align-items:center}
+.admin .btn{padding:7px 11px}
+.admin-tag{font-size:12px;color:#555;background:#fff;border:1px dashed #bbb;border-radius:999px;padding:4px 8px}
+.frame-tabs{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
+.chip{padding:8px 12px;border-radius:999px;border:1px solid #ddd;background:#fafafa;font-size:13px;cursor:pointer}
+.chip.active{border-color:var(--accent);background:#fff7e8}
+
+/* ---------- Bottom Sheet ---------- */
+.sheetWrap{position:fixed;inset:0;display:none;align-items:flex-end;justify-content:center;background:rgba(0,0,0,.35);z-index:50}
+.sheet{width:100%;max-width:1000px;background:var(--card);border-top-left-radius:20px;border-top-right-radius:20px;padding:0 0 16px;box-shadow:0 -8px 24px rgba(0,0,0,.2);max-height:calc(100vh - 10px);display:flex;flex-direction:column;overflow:hidden}
+.sheetHeader{position:sticky;top:0;background:#fff;border-bottom:1px solid #eee;padding:10px 12px;display:flex;gap:8px;align-items:center;z-index:2}
+.sheetHeader h3{margin:0;font-size:15px}
+.sheetHeader .spacer{flex:1}
+
+/* タブはPCのみ sticky。スマホは通常フローで重なりを防止 */
+.catalog-tabs{display:flex;gap:8px;flex-wrap:wrap;padding:10px 12px;background:#fff;border-bottom:1px solid #eee}
+@media (min-width: 720px){
+  .catalog-tabs{position:sticky;top:48px;z-index:2}
+}
+
+/* グリッドをシート内でスクロールさせる */
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:12px}
+#catalogGrid{flex:1 1 auto;overflow:auto}
+#altarGrid{flex:1 1 auto;overflow:auto}
+@media(min-width:720px){.grid{grid-template-columns:repeat(6,1fr)}}
+
+/* ---- カード（スマホでも名前が必ず見える） ---- */
+.entry{display:flex;flex-direction:column;border:1px solid #eee;border-radius:12px;overflow:hidden;background:#fff;cursor:pointer;text-align:center;min-height:158px}
+.entry .thumb{height:100px;background:#f3f3f3;flex:0 0 auto}
+.entry .thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.entry .name{flex:0 0 auto;display:flex;align-items:center;justify-content:center;color:#222;background:#fff;min-height:36px;padding:6px 6px 4px;font-size:12px;font-weight:700;line-height:1.2;white-space:normal;word-break:break-word;overflow-wrap:anywhere;z-index:1}
+.entry .type{flex:0 0 auto;font-size:11px;color:#777;background:#fff;padding:0 6px 8px}
+@media (max-width: 420px){ .entry{min-height:166px} .entry .thumb{height:88px} .entry .name{min-height:42px} }
+
+/* ---------- Stage / Canvas ---------- */
+.stage-wrap{margin-top:8px;border:1px dashed #e8e0cf;border-radius:16px;overflow:hidden;background:#fcfbf8}
+.stage2{position:relative;min-height:600px;touch-action:none}
+.canvas{position:relative;z-index:2;width:100%;height:100%}
+.hint{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);color:#777;font-size:13px;z-index:1;text-align:center}
+.item{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) scale(1);user-select:none;touch-action:none}
+.item img{display:block;max-width:300px;max-height:300px;width:220px;height:auto;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.12)}
+.item .label{position:absolute;left:50%;bottom:-20px;transform:translateX(-50%);font-size:12px;color:#333;background:rgba(255,255,255,.6);padding:2px 8px;border-radius:999px}
+.item .handle{position:absolute;right:-10px;bottom:-10px;width:22px;height:22px;border-radius:50%;background:#fff;border:2px solid var(--accent);display:grid;place-items:center;font-size:14px;cursor:nwse-resize}
+.item.selected{outline:2px dashed var(--accent);outline-offset:4px}
+.stack{position:absolute;right:8px;top:8px;display:flex;gap:6px;z-index:5}
+.stack .chip{padding:6px 10px;border:1px solid #ddd;border-radius:999px;background:#fff;font-size:12px;cursor:pointer}
+.stack .chip[disabled]{opacity:.35;cursor:not-allowed}
+
+/* ---------- Incense/Bell ---------- */
+.incense-layer{position:absolute;left:0;right:0;bottom:0;top:0;pointer-events:none;z-index:3}
+.incense{position:absolute;width:8px;height:18px;background:linear-gradient(180deg,#6b4d2e,#3b2a18);border-radius:2px;box-shadow:0 2px 4px rgba(0,0,0,.2)}
+.incense::after{content:"";position:absolute;left:50%;top:-6px;transform:translateX(-50%);width:6px;height:6px;background:radial-gradient(circle,#ffcf6d,#ff8a00);border-radius:50%;filter:blur(.3px)}
+.smoke{position:absolute;left:50%;bottom:42px;width:12px;height:12px;border-radius:50%;background:rgba(180,180,180,.35);filter:blur(1px);animation:smoke 2.4s linear forwards}
+@keyframes smoke{0%{transform:translate(-50%,0) scale(1);opacity:.45}60%{transform:translate(-50%,-70px) scale(1.3);opacity:.25}100%{transform:translate(-50%,-120px) scale(1.6);opacity:0}}
+.timerTag{position:absolute;left:50%;bottom:0;transform:translate(-50%,8px);font-size:12px;background:rgba(255,255,255,.8);padding:2px 8px;border-radius:999px;border:1px solid #eee;color:#333}
+
+/* ---------- Ihai overlay ---------- */
+.ihaiOverlay{position:absolute;inset:0;pointer-events:none}
+.ihaiOverlay .kaimyo{position:absolute;top:12%;bottom:12%;left:50%;transform:translateX(-50%);writing-mode:vertical-rl;text-orientation:mixed;font-family:"Yu Mincho","Hiragino Mincho ProN","Noto Serif JP",serif;font-weight:600;letter-spacing:2px;line-height:1.45;color:#1d140b;text-shadow:0 1px 1px rgba(255,255,255,.4),0 1px 12px rgba(0,0,0,.15);font-size:22px;white-space:pre-wrap;text-align:center}
+.framed-black img{border:8px solid #111;border-radius:8px}
+.framed-silver img{border:10px solid #cfcfcf;border-radius:8px}
+.framed-wood img{border:10px solid #8b5a2b;border-radius:8px}
+
+/* ---------- Profile ---------- */
+.form{display:grid;gap:10px;max-width:720px}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.row label{width:110px;color:#444}
+.row input,.row select,.row textarea{flex:1;min-width:200px;padding:8px 10px;border:1px solid #ddd;border-radius:10px}
+.row textarea{min-height:140px}
+.badge-ok{display:inline-block;padding:2px 8px;border-radius:999px;background:#e8f7ec;border:1px solid #bfe3c9;color:#205b2f;font-size:12px}
+.preview{margin-top:8px;border:1px solid #eee;border-radius:12px;background:#fff;padding:12px}
+.mem-list{margin-top:8px;display:grid;gap:6px}
+.mem-item{display:flex;gap:8px;justify-content:space-between;padding:8px 10px;border:1px solid #eee;border-radius:10px;background:#fff}
+.mem-item.upcoming{border-color:#cfead6;background:#f2faf4}
+.remind{display:flex;gap:8px;align-items:center}
+
+/* ---------- Bottom bar ---------- */
+.bottomBar{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid #eee;padding:10px 12px calc(10px + var(--safe)) 12px;z-index:40;display:flex;gap:8px;align-items:center;justify-content:space-between}
+.bb-group{display:flex;gap:8px;align-items:center}
+.bb-btn{flex:1;padding:12px 14px;border-radius:12px;border:1px solid #ddd;background:#fafafa;font-weight:700;cursor:pointer}
+.bb-primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.bb-wide{min-width:120px}
+
+/* --- Simple add dialog --- */
+.addWrap{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.35);z-index:60}
+.addSheet{width:min(92vw,420px);background:#fff;border-radius:16px;box-shadow:0 12px 32px rgba(0,0,0,.25);padding:16px}
+.addSheet h3{margin:0 0 8px}
+.addRow{display:flex;gap:8px;align-items:center;margin:8px 0}
+.addRow label{width:90px;color:#444}
+.addRow input,.addRow select{flex:1;padding:8px 10px;border:1px solid #ddd;border-radius:10px}
+.addSheet .actions{display:flex;gap:8px;justify-content:flex-end;margin-top:10px}
+</style>
+</head>
+<body>
+<header>
+  <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+    <h1>デジタル仏壇 v11.1</h1>
+    <select id="profileSelect" class="profile" title="プロフィールを切り替え"></select>
+    <button class="btn-ghost" id="btnAddProfile">＋ 追加</button>
+    <button class="btn-ghost" id="btnRenameProfile">✎ 名前変更</button>
+    <button class="btn-ghost" id="btnDeleteProfile">削除</button>
+    <button class="btn-ghost" id="btnInitAll">初期化</button>
+  </div>
+  <div class="nav">
+    <button class="tab active" data-go="p1">① 遺影</button>
+    <button class="tab" data-go="p2">② 仏壇</button>
+    <button class="tab" data-go="p3">③ プロフィール</button>
+    <div class="step">
+      <button class="btn-ghost" id="prevBtn">← 前へ</button>
+      <button class="btn" id="nextBtn">次へ →</button>
+    </div>
+  </div>
+</header>
+
+<div class="container">
+  <!-- Page 1 -->
+  <section id="p1" class="page active">
+    <div class="stage">
+      <div class="altar-bg"><img src="https://picsum.photos/seed/altarA/1600/1000" alt=""></div>
+      <div class="portrait-wrap" aria-live="polite">
+        <div class="frame wood" id="portraitFrame">
+          <div class="portrait" id="portrait">
+            <img class="silhouette" id="silhouette" src="https://upload.wikimedia.org/wikipedia/commons/8/89/Portrait_Placeholder.png" alt="シルエット">
+          </div>
+          <div class="overlay" id="overlay"><div class="spinner"></div>審査中...</div>
+          <div class="status" id="status"><span class="badge">未申請</span> / アップロードして承認を待ちます</div>
+        </div>
+      </div>
+    </div>
+    <div class="panel">
+      <button class="btn" id="btnApply">遺影を申請</button>
+      <div class="admin">
+        <span class="admin-tag">運営（擬似）</span>
+        <button class="btn-outline" id="btnApprove" disabled>承認</button>
+        <button class="btn-ghost" id="btnReject" disabled>却下</button>
+      </div>
+    </div>
+    <div class="frame-tabs">
+      <span>フレーム：</span>
+      <button class="chip" data-frame="black">黒縁</button>
+      <button class="chip active" data-frame="wood">木目</button>
+      <button class="chip" data-frame="silver">銀縁</button>
+    </div>
+    <p class="note">※ 承認すると自動で②仏壇ページに遺影が配置されます。プロフィールごとに独立して管理されます。</p>
+  </section>
+
+  <!-- Page 2 -->
+  <section id="p2" class="page">
+    <div class="panel">
+      <button class="btn" id="btnAltar">仏壇を選ぶ</button>
+      <a class="btn btn-outline" id="btnBuy" href="#" target="_blank" rel="noopener" aria-disabled="true">仏壇を購入</a>
+      <button class="btn btn-outline" id="btnCatalog">カタログ（仏具・お供え）</button>
+      <button class="btn-ghost" id="btnEdit">編集モード：OFF</button>
+      <button class="btn-outline" id="btnIhai" disabled>位牌テキスト編集</button>
+      <button class="btn-outline" id="btnPlacePortrait" disabled>遺影を配置</button>
+      <button class="btn" id="btnIncense15">線香（15秒）</button>
+      <button class="btn" id="btnIncense30">線香（30秒）</button>
+      <button class="btn" id="btnIncense60">線香（1分）</button>
+      <button class="btn-outline" id="btnRing">鈴を鳴らす</button>
+    </div>
+    <div class="stage-wrap">
+      <div class="stage2" id="stage2">
+        <div class="altar-bg"><img id="altarBg" src="https://picsum.photos/seed/altarA/1600/1000" alt=""></div>
+        <div class="canvas" id="canvas"></div>
+        <div class="incense-layer" id="incenseLayer" aria-live="polite"></div>
+        <div class="hint" id="hint">「カタログ」で仏具・お供えを配置。線香は香炉の位置から煙が上がります。</div>
+        <div class="stack">
+          <span class="chip" id="buySelected" disabled>購入ページ</span>
+          <span class="chip" id="front">最前面へ</span>
+          <span class="chip" id="back">最背面へ</span>
+          <span class="chip" id="remove">削除</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="sheetWrap" id="sheetAltar"><div class="sheet"><div class="sheetHeader"><button class="btn-ghost" id="btnAltarClose">閉じる</button><div class="spacer"></div><h3>仏壇を選ぶ</h3></div><div class="grid" id="altarGrid"></div></div></div>
+
+    <div class="sheetWrap" id="sheetCatalog">
+      <div class="sheet">
+        <div class="sheetHeader">
+          <button class="btn-ghost" id="btnCatalogClose">閉じる</button>
+          <div class="spacer"></div>
+          <h3>カタログ</h3>
+        </div>
+        <div class="catalog-tabs" id="tabs2">
+          <button class="chip active" data-cat="main">本尊・掛け軸・位牌</button>
+          <button class="chip" data-cat="vessels">供物・器類</button>
+          <button class="chip" data-cat="bell">おりん・火立・香炉</button>
+          <button class="chip" data-cat="tools">道具（マッチ消／線香差）</button>
+          <button class="chip" data-cat="offering">お供え（花・果物・菓子・飲料・線香）</button>
+        </div>
+        <div class="grid" id="catalogGrid"></div>
+      </div>
+    </div>
+
+    <div class="sheetWrap" id="sheetProduct">
+      <div class="sheet">
+        <div class="sheetHeader">
+          <button class="btn-ghost" id="btnProdCloseTop">閉じる</button>
+          <div class="spacer"></div>
+          <h3>商品詳細</h3>
+        </div>
+        <div style="display:flex;gap:16px;flex-wrap:wrap;padding:12px">
+          <div style="flex:1;min-width:220px">
+            <img id="prodImg" src="" alt="" style="width:100%;border-radius:12px;border:1px solid #eee">
+          </div>
+          <div style="flex:2;min-width:260px">
+            <h3 id="prodName" style="margin:0 0 6px"></h3>
+            <p id="prodDesc" style="margin:0 0 8px;color:#555">コラボ商品のサンプル詳細テキストです。</p>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <button class="btn" id="btnProdPlace">仏壇に配置</button>
+              <a class="btn-outline btn" id="btnProdBuy" href="#" target="_blank" rel="noopener">商品ページへ</a>
+              <button class="btn-ghost" id="btnProdClose">閉じる</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sheetWrap" id="sheetIhai"><div class="sheet">
+      <div class="sheetHeader"><button class="btn-ghost" id="btnIhaiCloseTop">閉じる</button><div class="spacer"></div><h3>位牌テキスト編集</h3></div>
+      <div style="padding:12px">
+        <div class="row"><label for="kaimyoInput">戒名・俗名（縦）</label><input id="kaimyoInput" type="text" placeholder="例：釋○○信士／信女 または 山田太郎"></div>
+        <div class="row"><label for="kaimyoSize">文字サイズ</label><input id="kaimyoSize" type="range" min="16" max="36" value="22"></div>
+        <div class="row" style="justify-content:flex-end;gap:8px">
+          <button class="btn-ghost" id="btnIhaiClear">文字を消す</button>
+          <button class="btn" id="btnIhaiApply">反映する</button>
+          <button class="btn-outline" id="btnIhaiClose">閉じる</button>
+        </div>
+        <p class="note">※ 位牌を選択してから編集してください。</p>
+      </div>
+    </div></div>
+  </section>
+
+  <!-- Page 3 -->
+  <section id="p3" class="page">
+    <h3 style="margin:6px 0 10px">プロフィール（記録）</h3>
+    <div class="form">
+      <div class="row"><label for="dod">没年月日</label><input id="dod" type="date"></div>
+      <div class="row"><label for="rel">続柄 / 種別</label>
+        <select id="rel">
+          <option value="">選択してください</option>
+          <option>祖父</option><option>祖母</option><option>父</option><option>母</option>
+          <option>夫</option><option>妻</option><option>兄弟</option><option>姉妹</option>
+          <option>息子</option><option>娘</option><option>親戚</option><option>友人</option>
+          <option>ペット</option><option>推し</option><option>その他</option>
+        </select>
+      </div>
+      <div class="row"><label for="kaimyoP">戒名</label><input id="kaimyoP" type="text" placeholder="例：釋◯◯信士／信女"></div>
+      <div class="row"><label for="memo">思い出 / メモ</label><textarea id="memo" placeholder="例：よく一緒に散歩しました…／推しのここが好き…"></textarea></div>
+      <div class="row remind">
+        <label style="width:auto">命日/記念日</label>
+        <span id="nextAnniv">-</span>
+        <a id="gcalLink" href="#" target="_blank" rel="noopener" class="btn-outline" style="padding:6px 10px;border-radius:10px">Googleカレンダー作成</a>
+      </div>
+      <div class="row" style="justify-content:flex-end;gap:8px">
+        <button class="btn-ghost" id="btnClearProfile">リセット</button>
+        <button class="btn" id="btnSaveProfile">保存</button>
+      </div>
+    </div>
+    <div class="preview" id="profilePreview" style="display:none"></div>
+    <div class="mem-list" id="memorialList"></div>
+  </section>
+</div>
+
+<!-- Add Profile Dialog -->
+<div class="addWrap" id="addWrap">
+  <div class="addSheet">
+    <h3>プロフィールを追加</h3>
+    <div class="addRow"><label>表示名</label><input id="addLabel" type="text" placeholder="例：祖父／祖母／ペット／推し…"></div>
+    <div class="addRow"><label>タイプ</label>
+      <select id="addType">
+        <option value="human">人</option>
+        <option value="pet">ペット</option>
+        <option value="oshi">推し</option>
+        <option value="other">その他</option>
+      </select>
+    </div>
+    <div class="actions">
+      <button class="btn-ghost" id="btnAddCancel">キャンセル</button>
+      <button class="btn" id="btnAddCreate">作成</button>
+    </div>
+  </div>
+</div>
+
+<div class="sheetWrap" id="sheetApply">
+  <div class="sheet">
+    <div class="sheetHeader"><button class="btn-ghost" id="btnApplyCloseTop">閉じる</button><div class="spacer"></div><h3>遺影の申請</h3></div>
+    <div style="padding:12px">
+      <div class="fileRow">
+        <input type="file" id="fileInput" accept="image/*">
+        <span style="font-size:12px;color:#666">※ 推奨比率 4:5／10MB以下</span>
+      </div>
+      <p style="margin:12px 0 6px;color:#444">サンプルから選ぶ（擬似用）</p>
+      <div class="grid" id="sampleGrid"></div>
+      <div class="consents">
+        <label><input type="checkbox" id="c1">権利/同意を有しています。</label>
+        <label><input type="checkbox" id="c2">関係者の同意を取得済みです。</label>
+        <label><input type="checkbox" id="c3">著名人等の無断利用ではありません。</label>
+      </div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px">
+        <button class="btn-ghost" id="btnCancel">やめる</button>
+        <button class="btn" id="btnSubmit" disabled>申請する</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="bottomBar" id="bottomBar">
+  <div class="bb-group">
+    <button class="bb-btn" id="bbPrev">← 前へ</button>
+  </div>
+  <div class="bb-group" id="bbCenter"></div>
+  <div class="bb-group">
+    <button class="bb-btn bb-primary bb-wide" id="bbNext">次へ →</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  /* ------------ Profiles (user-managed) ------------- */
+  function loadProfiles(){
+    try{
+      const js=localStorage.getItem('mp_profiles');
+      const a = js ? JSON.parse(js) : [];
+      if(Array.isArray(a)) return a;
+    }catch(e){}
+    return [];
+  }
+  function saveProfiles(arr){ localStorage.setItem('mp_profiles', JSON.stringify(arr)); }
+  let profiles = loadProfiles();
+  let currentId = localStorage.getItem('mp_current') || (profiles[0] && profiles[0].id) || '';
+
+  function key(s){ return 'mp_'+currentId+'_'+s; }
+
+  const sel = document.getElementById('profileSelect');
+  const btnAddProfile=document.getElementById('btnAddProfile');
+  const btnRenameProfile=document.getElementById('btnRenameProfile');
+  const btnDeleteProfile=document.getElementById('btnDeleteProfile');
+  const btnInitAll=document.getElementById('btnInitAll');
+
+  function renderSelect(){
+    sel.innerHTML='';
+    if(!profiles.length){
+      const opt=document.createElement('option'); opt.value=''; opt.textContent='（プロフィールを作成してください）'; sel.appendChild(opt);
+      sel.disabled = true;
+      btnRenameProfile.disabled = true;
+      btnDeleteProfile.disabled = true;
+      return;
+    }
+    profiles.forEach(p=>{
+      const opt=document.createElement('option'); opt.value=p.id; opt.textContent=p.label; sel.appendChild(opt);
+    });
+    sel.disabled = false;
+    btnRenameProfile.disabled = false;
+    btnDeleteProfile.disabled = false;
+    if(!currentId || !profiles.find(p=>p.id===currentId)){ currentId = profiles[0].id; }
+    sel.value=currentId;
+  }
+  renderSelect();
+  sel.onchange=()=> switchProfile(sel.value);
+
+  /* -- Add/Rename/Delete/Init -- */
+  const addWrap=document.getElementById('addWrap'), addLabel=document.getElementById('addLabel'), addType=document.getElementById('addType');
+  const btnAddCancel=document.getElementById('btnAddCancel'), btnAddCreate=document.getElementById('btnAddCreate');
+  btnAddProfile.onclick=()=>{ addLabel.value=''; addType.value='human'; addWrap.style.display='flex'; };
+  btnAddCancel.onclick=()=> addWrap.style.display='none';
+  addWrap.onclick=(e)=>{ if(e.target===addWrap) addWrap.style.display='none'; };
+  btnAddCreate.onclick=()=>{
+    const label=(addLabel.value||'').trim() || '新規プロフィール';
+    const id=uniqueId(label);
+    profiles.push({id, label, type:addType.value});
+    saveProfiles(profiles);
+    addWrap.style.display='none';
+    currentId=id; localStorage.setItem('mp_current', currentId);
+    renderSelect();
+    switchProfile(id, true);
+  };
+  function uniqueId(label){ const base=label.replace(/\s+/g,'').toLowerCase().slice(0,8)||'p'; let id=base, i=1; while(profiles.find(p=>p.id===id)){ id=base+(++i); } return id; }
+
+  btnRenameProfile.onclick=()=>{
+    if(!profiles.length) return;
+    const p = profiles.find(x=>x.id===currentId);
+    const name = prompt('新しい表示名を入力', p ? p.label : '');
+    if(name && name.trim()){
+      p.label = name.trim();
+      saveProfiles(profiles);
+      renderSelect();
+    }
+  };
+  btnDeleteProfile.onclick=()=>{
+    if(!profiles.length) return;
+    if(!confirm('このプロフィールを削除しますか？（仏壇配置・遺影・メモ等も端末から削除されます）')) return;
+    const prefix = 'mp_'+currentId+'_';
+    const keys = Object.keys(localStorage);
+    keys.forEach(k=>{ if(k.startsWith(prefix)) localStorage.removeItem(k); });
+    profiles = profiles.filter(x=>x.id!==currentId);
+    saveProfiles(profiles);
+    if(!profiles.length){
+      currentId='';
+      localStorage.removeItem('mp_current');
+      renderSelect();
+      clearAllUI();
+      setTimeout(()=> addWrap.style.display='flex', 50);
+      return;
+    }
+    currentId = profiles[0].id;
+    localStorage.setItem('mp_current', currentId);
+    renderSelect();
+    switchProfile(currentId, true);
+  };
+  btnInitAll.onclick=()=>{
+    if(!confirm('すべて初期化して最初からやり直しますか？（この端末の保存データは消えます）')) return;
+    Object.keys(localStorage).forEach(k=>{ if(k.startsWith('mp_')) localStorage.removeItem(k); });
+    profiles = [];
+    currentId = '';
+    renderSelect();
+    clearAllUI();
+    setTimeout(()=> addWrap.style.display='flex', 50);
+  };
+
+  function clearAllUI(){
+    overlay.style.display='none';
+    status.classList.remove('approved','pending');
+    status.innerHTML='<span class="badge">未申請</span> / アップロードして承認を待ちます';
+    clearPortrait();
+    altarBg.src='https://picsum.photos/seed/altarA/1600/1000';
+    btnBuy.href='#'; btnBuy.setAttribute('aria-disabled','true');
+    canvas.innerHTML=''; hint.style.display='block'; selected=null; setBuyChip(null);
+    dod.value=''; rel.value=''; memo.value=''; kaimyoP.value='';
+    preview.style.display='none'; preview.innerHTML='';
+    document.getElementById('memorialList').innerHTML='';
+    nextAnnivEl.textContent='-'; gcalLink.href='#';
+  }
+
+  /* ------------ Router ------------- */
+  const pages=['p1','p2','p3'];
+  const tabs=[...document.querySelectorAll('.tab')];
+  const prevBtn=document.getElementById('prevBtn'), nextBtn=document.getElementById('nextBtn');
+  const bbPrev=document.getElementById('bbPrev'), bbNext=document.getElementById('bbNext'), bbCenter=document.getElementById('bbCenter');
+  function show(id){ pages.forEach(pid=>{document.getElementById(pid).classList.toggle('active', pid===id);}); tabs.forEach(t=>t.classList.toggle('active', t.dataset.go===id)); localStorage.setItem('mp_current_page', id); updateNav(id); if(id==='p2') onEnterAltar(); if(id==='p3') loadProfile(); renderBottomBar(id); }
+  function updateNav(id){ const i=pages.indexOf(id); prevBtn.disabled=(i===0); nextBtn.disabled=(i===pages.length-1); bbPrev.disabled=prevBtn.disabled; bbNext.disabled=nextBtn.disabled; }
+  tabs.forEach(t=>t.onclick=()=>show(t.dataset.go));
+  prevBtn.onclick=bbPrev.onclick=()=>{ const i=pages.indexOf(current()); if(i>0) show(pages[i-1]); };
+  nextBtn.onclick=bbNext.onclick=()=>{ const i=pages.indexOf(current()); if(i<pages.length-1) show(pages[i+1]); };
+  function current(){ return pages.find(pid=>document.getElementById(pid).classList.contains('active')); }
+  show(localStorage.getItem('mp_current_page')||'p1');
+
+  function renderBottomBar(id){
+    bbCenter.innerHTML='';
+    if(id==='p1'){
+      const a=document.createElement('button'); a.className='bb-btn bb-primary'; a.textContent='遺影を申請'; a.onclick=()=>btnApply.click(); bbCenter.appendChild(a);
+    }else if(id==='p2'){
+      const c1=document.createElement('button'); c1.className='bb-btn'; c1.textContent='カタログ'; c1.onclick=()=>btnCatalog.click();
+      const c2=document.createElement('button'); c2.className='bb-btn'; c2.textContent='編集切替'; c2.onclick=()=>btnEdit.click();
+      const c3=document.createElement('button'); c3.className='bb-btn'; c3.textContent='線香'; c3.onclick=()=>document.getElementById('btnIncense30').click();
+      const c4=document.createElement('button'); c4.className='bb-btn'; c4.textContent='鈴'; c4.onclick=()=>document.getElementById('btnRing').click();
+      bbCenter.append(c1,c2,c3,c4);
+    }else if(id==='p3'){
+      const s=document.createElement('button'); s.className='bb-btn bb-primary'; s.textContent='保存'; s.onclick=()=>document.getElementById('btnSaveProfile').click(); bbCenter.appendChild(s);
+    }
+  }
+
+  /* -------- Portrait flow -------- */
+  const sheet = document.getElementById('sheetApply');
+  const btnApply = document.getElementById('btnApply');
+  const btnApplyCloseTop = document.getElementById('btnApplyCloseTop');
+  const btnCancel = document.getElementById('btnCancel');
+  const btnSubmit = document.getElementById('btnSubmit');
+  const fileInput = document.getElementById('fileInput');
+  const sampleGrid = document.getElementById('sampleGrid');
+  const c1=document.getElementById('c1'), c2=document.getElementById('c2'), c3=document.getElementById('c3');
+  const status = document.getElementById('status');
+  const overlay = document.getElementById('overlay');
+  const portrait = document.getElementById('portrait');
+  const silhouette = document.getElementById('silhouette');
+  const btnApprove = document.getElementById('btnApprove');
+  const btnReject = document.getElementById('btnReject');
+  const frameEl = document.getElementById('portraitFrame');
+  const frameChips = [...document.querySelectorAll('.frame-tabs .chip')];
+
+  let chosenURL = null, pending = false;
+  let selectedFrame = 'wood';
+  function applyFrame(kind){ frameEl.classList.remove('black','silver','wood'); frameEl.classList.add(kind); }
+  frameChips.forEach(ch=>{
+    ch.onclick=()=>{ frameChips.forEach(c=>c.classList.remove('active')); ch.classList.add('active'); selectedFrame = ch.dataset.frame; if(currentId) localStorage.setItem(key('portrait_frame'), selectedFrame); applyFrame(selectedFrame); };
+  });
+
+  const SAMPLES = ['https://picsum.photos/seed/portraitA/600/750','https://picsum.photos/seed/portraitB/600/750','https://picsum.photos/seed/portraitC/600/750','https://picsum.photos/seed/portraitD/600/750'];
+  function renderSamples(){ sampleGrid.innerHTML=''; SAMPLES.forEach((url,i)=>{ const el=document.createElement('button'); el.className='entry'; el.innerHTML='<div class="thumb"><img src="'+url+'" alt="サンプル'+(i+1)+'"></div><div class="name">サンプル'+(i+1)+'</div>'; el.onclick=()=>{ chosenURL=url; updateSubmitButton(); highlightChoice(el); }; sampleGrid.appendChild(el); }); }
+  function highlightChoice(el){ sampleGrid.querySelectorAll('.entry').forEach(e=>e.style.outline='none'); el.style.outline='2px solid var(--accent)'; }
+  btnApply.onclick=()=>{ if(!ensureProfile()){ return; } if(pending){ alert('現在、審査中です。承認/却下後に再申請してください。'); return; } chosenURL=null; fileInput.value=''; [c1,c2,c3].forEach(c=>c.checked=false); btnSubmit.disabled=true; renderSamples(); sheet.style.display='flex'; };
+  btnApplyCloseTop.onclick=()=> sheet.style.display='none';
+  btnCancel.onclick=()=> sheet.style.display='none';
+  sheet.onclick=(e)=>{ if(e.target===sheet) sheet.style.display='none'; };
+  document.addEventListener('keydown',(e)=>{ if(e.key==='Escape'){ [sheet, sheetCatalog, sheetProduct, sheetIhai, sheetAltar, addWrap].forEach(s=>s.style.display='none'); }});
+  fileInput.onchange=(e)=>{ const f=e.target.files&&e.target.files[0]; if(!f){ chosenURL=null; updateSubmitButton(); return;} chosenURL=URL.createObjectURL(f); sampleGrid.querySelectorAll('.entry').forEach(e=>e.style.outline='none'); updateSubmitButton(); };
+  [c1,c2,c3].forEach(cb=>cb.onchange=updateSubmitButton);
+  function updateSubmitButton(){ btnSubmit.disabled=!(chosenURL && c1.checked && c2.checked && c3.checked); }
+  btnSubmit.onclick=()=>{ if(btnSubmit.disabled) return; sheet.style.display='none'; pending=true; overlay.style.display='flex'; status.classList.remove('approved'); status.classList.add('pending'); status.innerHTML='<span class="badge">審査中</span> / 運営の承認をお待ちください'; btnApprove.disabled=false; btnReject.disabled=false; localStorage.setItem(key('portrait_status'),'pending'); };
+
+  btnApprove.onclick=()=>{
+    if(!pending) return;
+    applyPortrait(chosenURL);
+    overlay.style.display='none';
+    status.classList.remove('pending'); status.classList.add('approved');
+    status.innerHTML='<span class="badge">承認済み</span> / 遺影を表示しています';
+    btnApprove.disabled=true; btnReject.disabled=true; pending=false;
+    localStorage.setItem(key('portrait_url'), chosenURL);
+    localStorage.setItem(key('portrait_frame'), selectedFrame);
+    localStorage.setItem(key('portrait_status'),'approved');
+    localStorage.setItem('mp_current', currentId);
+    show('p2');
+    setTimeout(()=>{ placePortraitOnAltar(chosenURL, selectedFrame); }, 50);
+  };
+  btnReject.onclick=()=>{
+    if(!pending) return;
+    chosenURL=null; overlay.style.display='none';
+    status.classList.remove('pending','approved');
+    status.innerHTML='<span class="badge">未申請</span> / アップロードして承認を待ちます';
+    clearPortrait(); btnApprove.disabled=true; btnReject.disabled=true; pending=false;
+    localStorage.removeItem(key('portrait_url')); localStorage.setItem(key('portrait_status'),'none');
+  };
+
+  function applyPortrait(url){ clearPortrait(); const img=document.createElement('img'); img.src=url; img.alt='承認済みの遺影'; portrait.appendChild(img); }
+  function clearPortrait(){ portrait.innerHTML=''; portrait.appendChild(silhouette); }
+
+  /* -------- Altar / Catalog -------- */
+  const ALTARS=[
+    {id:'a',name:'仏壇A（明るめ木目）',img:'https://picsum.photos/seed/altarA/1600/1000',buy:'https://example.com/butsudanA'},
+    {id:'b',name:'仏壇B（ダーク系）',img:'https://picsum.photos/seed/altarB/1600/1000',buy:'https://example.com/butsudanB'},
+    {id:'c',name:'仏壇C（シンプル）',img:'https://picsum.photos/seed/altarC/1600/1000',buy:'https://example.com/butsudanC'},
+    {id:'d',name:'仏壇D（金箔アクセント）',img:'https://picsum.photos/seed/altarD/1600/1000',buy:'https://example.com/butsudanD'}
+  ];
+  const CATALOG={
+    main:[
+      {id:'gohonzon',name:'御本尊',img:'https://picsum.photos/seed/gohonzon/600/800'},
+      {id:'kakejiku',name:'掛け軸',img:'https://picsum.photos/seed/kakejiku/600/800'},
+      {id:'ihai-s',name:'位牌（小）',img:'https://picsum.photos/seed/ihaiS/400/600',kind:'ihai'},
+      {id:'ihai-m',name:'位牌（中）',img:'https://picsum.photos/seed/ihaiM/500/750',kind:'ihai'},
+      {id:'ihai-l',name:'位牌（大）',img:'https://picsum.photos/seed/ihaiL/600/900',kind:'ihai'}
+    ],
+    vessels:[
+      {id:'buppanki',name:'仏飯器',img:'https://picsum.photos/seed/buppanki/800/600'},
+      {id:'chayuuki',name:'茶湯器',img:'https://picsum.photos/seed/chayuuki/800/600'},
+      {id:'hanadate',name:'花立',img:'https://picsum.photos/seed/hanadate/800/600'},
+      {id:'takatsuki',name:'高月',img:'https://picsum.photos/seed/takatsuki/800/600'},
+      {id:'buppanzen',name:'仏飯膳',img:'https://picsum.photos/seed/buppanzen/800/600'}
+    ],
+    bell:[
+      {id:'orin',name:'おりん',img:'https://picsum.photos/seed/orin/800/600'},
+      {id:'rinbo',name:'リン棒',img:'https://picsum.photos/seed/rinbo/800/600'},
+      {id:'hidate',name:'火立',img:'https://picsum.photos/seed/hidate/800/600'},
+      {id:'koro',name:'香炉',img:'https://picsum.photos/seed/koro/800/600'}
+    ],
+    tools:[
+      {id:'matchkeshi',name:'マッチ消',img:'https://picsum.photos/seed/matchkeshi/800/600'},
+      {id:'senkosashi-a',name:'線香差（A）',img:'https://picsum.photos/seed/senkosashiA/800/600'},
+      {id:'senkosashi-b',name:'線香差（B）',img:'https://picsum.photos/seed/senkosashiB/800/600'},
+      {id:'senkosashi-c',name:'線香差（C）',img:'https://picsum.photos/seed/senkosashiC/800/600'}
+    ],
+    offering:[
+      {id:'flower-white',name:'仏花（白）',img:'https://picsum.photos/seed/flower1/600/600'},
+      {id:'flower-color',name:'仏花（彩）',img:'https://picsum.photos/seed/flower2/600/600'},
+      {id:'fruit-mikan',name:'みかん',img:'https://picsum.photos/seed/fruit1/600/600'},
+      {id:'fruit-grape',name:'ぶどう',img:'https://picsum.photos/seed/fruit2/600/600'},
+      {id:'fruit-apple',name:'りんご',img:'https://picsum.photos/seed/fruit3/600/600'},
+      {id:'wagashi',name:'和菓子',img:'https://picsum.photos/seed/sweets1/600/600'},
+      {id:'dango',name:'団子',img:'https://picsum.photos/seed/sweets2/600/600'},
+      {id:'manju',name:'まんじゅう',img:'https://picsum.photos/seed/sweets3/600/600'},
+      {id:'green-tea',name:'緑茶',img:'https://picsum.photos/seed/drink1/600/600'},
+      {id:'bottle-juice',name:'ジュース（瓶）',img:'https://picsum.photos/seed/drink2/600/600'},
+      {id:'can-coffee',name:'コーヒー缶',img:'https://picsum.photos/seed/drink3/600/600'},
+      {id:'incense-bundle',name:'線香束',img:'https://picsum.photos/seed/insence1/600/600'},
+      {id:'incense-set',name:'香皿セット',img:'https://picsum.photos/seed/insence2/600/600'},
+      {id:'brand-monaka',name:'桜最中（コラボ）',img:'https://picsum.photos/seed/brandwagashi/600/600',url:'https://example.com/collab-monaka'},
+      {id:'brand-juice',name:'瓶ジュース（コラボ）',img:'https://picsum.photos/seed/brandjuice/600/600',url:'https://example.com/collab-juice'},
+      {id:'brand-cheesecake',name:'チーズケーキ（コラボ）',img:'https://picsum.photos/seed/brandcake/600/600',url:'https://example.com/collab-cheesecake'}
+    ]
+  };
+
+  const stage2=document.getElementById('stage2'), canvas=document.getElementById('canvas'), incenseLayer=document.getElementById('incenseLayer'), hint=document.getElementById('hint');
+  const btnAltar=document.getElementById('btnAltar'), sheetAltar=document.getElementById('sheetAltar'), altarGrid=document.getElementById('altarGrid'), altarBg=document.getElementById('altarBg'), btnBuy=document.getElementById('btnBuy'), btnAltarClose=document.getElementById('btnAltarClose');
+  const btnCatalog=document.getElementById('btnCatalog'), sheetCatalog=document.getElementById('sheetCatalog'), catalogGrid=document.getElementById('catalogGrid'), tabs2=document.getElementById('tabs2'), btnCatalogClose=document.getElementById('btnCatalogClose');
+  const sheetProduct=document.getElementById('sheetProduct'), prodImg=document.getElementById('prodImg'), prodName=document.getElementById('prodName'), prodDesc=document.getElementById('prodDesc'), btnProdPlace=document.getElementById('btnProdPlace'), btnProdBuy=document.getElementById('btnProdBuy'), btnProdClose=document.getElementById('btnProdClose'), btnProdCloseTop=document.getElementById('btnProdCloseTop');
+  const btnEdit=document.getElementById('btnEdit'), front=document.getElementById('front'), back=document.getElementById('back'), remove=document.getElementById('remove'), buySelected=document.getElementById('buySelected');
+  const btnIncense15=document.getElementById('btnIncense15'), btnIncense30=document.getElementById('btnIncense30'), btnIncense60=document.getElementById('btnIncense60'), btnRing=document.getElementById('btnRing');
+  const btnIhai=document.getElementById('btnIhai'), sheetIhai=document.getElementById('sheetIhai'), kaimyoInput=document.getElementById('kaimyoInput'), kaimyoSize=document.getElementById('kaimyoSize'), btnIhaiApply=document.getElementById('btnIhaiApply'), btnIhaiClose=document.getElementById('btnIhaiClose'), btnIhaiCloseTop=document.getElementById('btnIhaiCloseTop'), btnIhaiClear=document.getElementById('btnIhaiClear');
+  const btnPlacePortrait=document.getElementById('btnPlacePortrait');
+  let editMode=false, selected=null, zCounter=10, currentCat='main';
+  let currentProduct=null;
+
+  /* ----- Altar sheet ----- */
+  btnAltar.onclick=()=>{ if(!ensureProfile()) return; sheetAltar.style.display='flex'; renderAltars(); };
+  btnAltarClose.onclick=()=> sheetAltar.style.display='none';
+  sheetAltar.onclick=(e)=>{ if(e.target===sheetAltar) sheetAltar.style.display='none'; };
+  function renderAltars(){ altarGrid.innerHTML=''; ALTARS.forEach(a=>{ const el=document.createElement('button'); el.className='entry'; el.innerHTML=`<div class="thumb"><img src="${a.img}" alt="${a.name}"></div><div class="name">${a.name}</div>`; el.onclick=()=>{ altarBg.src=a.img; btnBuy.href=a.buy; btnBuy.setAttribute('aria-disabled','false'); sheetAltar.style.display='none'; localStorage.setItem(key('altar_bg'), a.img); localStorage.setItem(key('altar_buy'), a.buy); }; altarGrid.appendChild(el); }); }
+
+  /* ----- Catalog ----- */
+  btnCatalog.onclick=()=>{ if(!ensureProfile()) return; sheetCatalog.style.display='flex'; renderCatalog(); };
+  btnCatalogClose.onclick=()=> sheetCatalog.style.display='none';
+  sheetCatalog.onclick=(e)=>{ if(e.target===sheetCatalog) sheetCatalog.style.display='none'; };
+  tabs2.onclick=(e)=>{ if(e.target.matches('.chip')){ tabs2.querySelectorAll('.chip').forEach(c=>c.classList.remove('active')); e.target.classList.add('active'); currentCat=e.target.dataset.cat; renderCatalog(); } };
+  function renderCatalog(){ catalogGrid.innerHTML=''; (CATALOG[currentCat]||[]).forEach(item=>{ const el=document.createElement('button'); el.className='entry'; el.innerHTML=`<div class="thumb"><img src="${item.img}" alt="${item.name}"></div><div class="name">${item.name}</div><div class="type">${item.url?'商品詳細':'タップで追加'}</div>`; el.onclick=()=>{ if(item.url){ openProduct(item);} else { addItem(item); sheetCatalog.style.display='none'; saveCanvas(); } }; catalogGrid.appendChild(el); }); }
+
+  /* ----- Product ----- */
+  function openProduct(item){ currentProduct=item; prodImg.src=item.img; prodName.textContent=item.name; prodDesc.textContent='期間限定のコラボ商品サンプルです。'; btnProdBuy.href=item.url||'#'; sheetProduct.style.display='flex'; }
+  ;[btnProdClose, btnProdCloseTop].forEach(b=> b.onclick=()=> sheetProduct.style.display='none');
+  btnProdPlace.onclick=()=>{ if(!currentProduct) return; addItem(currentProduct); sheetProduct.style.display='none'; sheetCatalog.style.display='none'; saveCanvas(); };
+
+  /* ----- Stage items ----- */
+  function addItem(data){
+    hint.style.display='none';
+    const el=document.createElement('div');
+    el.className='item';
+    el.style.zIndex=(++zCounter);
+    el.dataset.url=data.url||'';
+    el.dataset.kind=data.kind||'';
+    el.dataset.id=data.id||'';
+    el.innerHTML = `<img src="${data.img}" alt="${data.name}"><div class="label">${data.name}</div><div class="handle">↘</div>`;
+    if(el.dataset.kind==='ihai'){
+      const overlay=document.createElement('div'); overlay.className='ihaiOverlay'; overlay.innerHTML='<div class="kaimyo"></div>'; el.appendChild(overlay);
+    }
+    canvas.appendChild(el);
+    makeInteractive(el);
+    select(el);
+    return el;
+  }
+  const canvas=document.getElementById('canvas'), incenseLayer=document.getElementById('incenseLayer'), hint=document.getElementById('hint');
+  const btnEdit=document.getElementById('btnEdit'), front=document.getElementById('front'), back=document.getElementById('back'), remove=document.getElementById('remove'), buySelected=document.getElementById('buySelected');
+  btnEdit.onclick=()=>{ if(!ensureProfile()) return; editMode=!editMode; btnEdit.textContent='編集モード：'+(editMode?'ON':'OFF'); canvas.querySelectorAll('.item .handle').forEach(h=>h.style.display=editMode?'grid':'none'); };
+  canvas.addEventListener('pointerdown', (e)=>{ if(e.target===canvas){ select(null); } });
+  front.onclick=()=>{ if(selected){ selected.style.zIndex=(++zCounter); saveCanvas(); } };
+  back.onclick=()=>{ if(selected){ selected.style.zIndex='1'; saveCanvas(); } };
+  remove.onclick=()=>{ if(selected){ selected.remove(); setSelected(null); saveCanvas(); } };
+  buySelected.onclick=()=>{ if(!selected) return; const url=selected.dataset.url; if(url) window.open(url, '_blank'); };
+  function setBuyChip(el){ const url=el&&el.dataset?el.dataset.url:''; url?buySelected.removeAttribute('disabled'):buySelected.setAttribute('disabled',''); }
+
+  function makeInteractive(el){
+    const img=el.querySelector('img'), handle=el.querySelector('.handle'); handle.style.display=editMode?'grid':'none';
+    let dragging=false,startX=0,startY=0,baseLeft=0,baseTop=0;
+    el.addEventListener('pointerdown', (e)=>{ if(!editMode){ select(el); return; } if(e.target===handle) return; dragging=true; el.setPointerCapture(e.pointerId); startX=e.clientX; startY=e.clientY; const rect=el.getBoundingClientRect(), parent=canvas.getBoundingClientRect(); baseLeft=rect.left-parent.left; baseTop=rect.top-parent.top; select(el); e.preventDefault(); });
+    el.addEventListener('pointermove', (e)=>{ if(!dragging) return; const dx=e.clientX-startX,dy=e.clientY-startY; el.style.left=(baseLeft+dx)+'px'; el.style.top=(baseTop+dy)+'px'; el.style.transform='translate(0,0)'; });
+    el.addEventListener('pointerup', ()=>{ dragging=false; saveCanvas(); } );
+    el.addEventListener('pointercancel', ()=> dragging=false );
+    let resizing=false,startW=0,startH=0,rStartX=0,rStartY=0;
+    const handle=el.querySelector('.handle');
+    handle.addEventListener('pointerdown', (e)=>{ if(!editMode) return; resizing=true; handle.setPointerCapture(e.pointerId); rStartX=e.clientX; rStartY=e.clientY; const rect=img.getBoundingClientRect(); startW=rect.width; startH=rect.height; select(el); e.preventDefault(); e.stopPropagation(); });
+    handle.addEventListener('pointermove', (e)=>{ if(!resizing) return; const dx=e.clientX-rStartX,ratio=startW/startH; let newW=Math.max(80,startW+dx); img.style.width=newW+'px'; img.style.height=(newW/ratio)+'px'; });
+    handle.addEventListener('pointerup', ()=>{ resizing=false; saveCanvas(); } );
+    handle.addEventListener('pointercancel', ()=> resizing=false );
+    el.addEventListener('click', ()=> select(el) );
+  }
+  function setSelected(el){ selected=el; setBuyChip(el); if(el && el.dataset.kind==='ihai'){ btnIhai.removeAttribute('disabled'); } else { btnIhai.setAttribute('disabled',''); } }
+  function select(el){ canvas.querySelectorAll('.item').forEach(i=>i.classList.remove('selected')); if(el) el.classList.add('selected'); setSelected(el); }
+
+  function serializeCanvas(){
+    const items=[...canvas.querySelectorAll('.item')].map(el=>{
+      const img=el.querySelector('img');
+      const kEl=el.querySelector('.kaimyo');
+      return {
+        id: el.dataset.id || '',
+        kind: el.dataset.kind || '',
+        url: el.dataset.url || '',
+        name: el.querySelector('.label')?.textContent || '',
+        img: img?.src || '',
+        left: el.style.left || '',
+        top: el.style.top || '',
+        z: parseInt(el.style.zIndex||'1',10) || 1,
+        width: img?.style.width || '',
+        kaimyo: kEl ? kEl.textContent : '',
+        kaimyoSize: kEl ? (kEl.style.fontSize||'') : '',
+        frameClass: el.className.includes('framed-') ? (el.className.match(/framed-(\w+)/)||[])[0] : ''
+      };
+    });
+    const state = { bg: altarBg.src || '', buy: btnBuy.href || '#', items };
+    return state;
+  }
+  function saveCanvas(){ if(!currentId) return; const s=serializeCanvas(); localStorage.setItem(key('altar_state'), JSON.stringify(s)); }
+  function loadCanvas(){
+    canvas.innerHTML=''; selected=null; setBuyChip(null); hint.style.display='block';
+    if(!currentId) return;
+    const js=localStorage.getItem(key('altar_state')); if(!js) return;
+    try{
+      const s=JSON.parse(js);
+      if(s.bg){ altarBg.src=s.bg; }
+      if(s.buy && s.buy!=='#'){ btnBuy.href=s.buy; btnBuy.setAttribute('aria-disabled','false'); } else { btnBuy.href='#'; btnBuy.setAttribute('aria-disabled','true'); }
+      (s.items||[]).forEach(d=>{
+        const el=addItem({id:d.id, name:d.name, img:d.img, url:d.url, kind:d.kind});
+        if(d.left){ el.style.left=d.left; el.style.top=d.top; el.style.transform='translate(0,0)'; }
+        if(d.z){ el.style.zIndex=d.z; }
+        const img=el.querySelector('img'); if(d.width){ img.style.width=d.width; }
+        if(d.kaimyo){ const kEl=el.querySelector('.kaimyo'); if(kEl){ kEl.textContent=d.kaimyo; if(d.kaimyoSize) kEl.style.fontSize=d.kaimyoSize; } }
+        if(d.frameClass){ el.classList.add(d.frameClass); }
+      });
+      if((s.items||[]).length) hint.style.display='none';
+    }catch(e){}
+  }
+
+  /* ----- Incense & Bell ----- */
+  function lightIncense(seconds){
+    if(!ensureProfile()) return;
+    const koro=(selected&&selected.dataset.id==='koro')?selected:canvas.querySelector('.item[data-id="koro"]');
+    const holder=document.createElement('div'); holder.className='incense';
+    const stageRect=stage2.getBoundingClientRect();
+    if(koro){ const r=koro.getBoundingClientRect(); const cx=r.left+r.width/2-stageRect.left; const top=r.top-stageRect.top+r.height*0.05; holder.style.left=cx+'px'; holder.style.top=top+'px'; }
+    else{ holder.style.left='50%'; holder.style.bottom='28px'; holder.style.transform='translateX(-50%)'; }
+    incenseLayer.appendChild(holder);
+    const tag=document.createElement('div'); tag.className='timerTag'; tag.textContent=seconds+'秒'; holder.appendChild(tag);
+    const smokeInterval=setInterval(()=>{ const s=document.createElement('div'); s.className='smoke'; const drift=(Math.random()*36-18); s.style.transform='translate('+drift+'px,0)'; holder.appendChild(s); setTimeout(()=>s.remove(),2500); },550);
+    let remain=seconds; const tick=setInterval(()=>{ remain-=1; if(remain>=0) tag.textContent=remain+'秒'; },1000);
+    setTimeout(()=>{ clearInterval(smokeInterval); clearInterval(tick); holder.style.transition='opacity .6s'; holder.style.opacity='0'; setTimeout(()=>holder.remove(),650); }, seconds*1000);
+  }
+  document.getElementById('btnIncense15').onclick=()=>lightIncense(15);
+  document.getElementById('btnIncense30').onclick=()=>lightIncense(30);
+  document.getElementById('btnIncense60').onclick=()=>lightIncense(60);
+
+  let audioCtx=null; function getCtx(){ if(!audioCtx||audioCtx.state==='closed'){ audioCtx=new (window.AudioContext||window.webkitAudioContext)(); } return audioCtx; }
+  document.getElementById('btnRing').onclick=async()=>{ if(!ensureProfile()) return; const ctx=getCtx(); if(ctx.state==='suspended'){ try{ await ctx.resume(); }catch(e){} } ringBell(ctx); };
+  function ringBell(ctx){ const now=ctx.currentTime, freqs=[740,1480,2220,2960], gains=[.8,.35,.18,.12]; freqs.forEach((f,i)=>{ const osc=ctx.createOscillator(), gain=ctx.createGain(); osc.type='sine'; osc.frequency.value=f; gain.gain.setValueAtTime(.0001,now); gain.gain.exponentialRampToValueAtTime(gains[i],now+.01); gain.gain.exponentialRampToValueAtTime(.0001,now+2.2+i*.1); osc.connect(gain).connect(ctx.destination); osc.frequency.exponentialRampToValueAtTime(f*.998,now+.2); osc.frequency.exponentialRampToValueAtTime(f*1.002,now+.6); osc.start(now); osc.stop(now+2.6+i*.1); }); }
+
+  /* ----- Ihai editor ----- */
+  const btnIhai=document.getElementById('btnIhai'), sheetIhai=document.getElementById('sheetIhai'), kaimyoInput=document.getElementById('kaimyoInput'), kaimyoSize=document.getElementById('kaimyoSize'), btnIhaiApply=document.getElementById('btnIhaiApply'), btnIhaiClose=document.getElementById('btnIhaiClose'), btnIhaiCloseTop=document.getElementById('btnIhaiCloseTop'), btnIhaiClear=document.getElementById('btnIhaiClear');
+  btnIhai.onclick=()=>{ if(!selected||selected.dataset.kind!=='ihai')return; const k=selected.querySelector('.kaimyo')?.textContent||''; const kSize=parseInt(selected.querySelector('.kaimyo')?.style.fontSize||'22',10); kaimyoInput.value=k; kaimyoSize.value=isNaN(kSize)?22:kSize; sheetIhai.style.display='flex'; };
+  ;[btnIhaiClose, btnIhaiCloseTop].forEach(b=> b.onclick=()=> sheetIhai.style.display='none');
+  sheetIhai.onclick=(e)=>{ if(e.target.id==='sheetIhai') e.currentTarget.style.display='none'; };
+  btnIhaiClear.onclick=()=>{ kaimyoInput.value=''; if(selected && selected.dataset.kind==='ihai'){ const kEl=selected.querySelector('.kaimyo'); if(kEl){ kEl.textContent=''; } saveCanvas(); } };
+  btnIhaiApply.onclick=()=>{ if(!selected||selected.dataset.kind!=='ihai')return; const k=(kaimyoInput.value||'').trim(); const kEl=selected.querySelector('.kaimyo'); kEl.textContent=k; kEl.style.fontSize=(parseInt(kaimyoSize.value,10)||22)+'px'; sheetIhai.style.display='none'; saveCanvas(); };
+
+  /* ----- Portrait on altar ----- */
+  function onEnterAltar(){ const url=currentId?localStorage.getItem(key('portrait_url')):''; document.getElementById('btnPlacePortrait').disabled=!url; loadCanvas(); }
+  document.getElementById('btnPlacePortrait').onclick=()=>{ const url=currentId?localStorage.getItem(key('portrait_url')):''; if(!url) return; const fr=localStorage.getItem(key('portrait_frame'))||'wood'; const el=addItem({id:'portrait', name:'遺影', img:url}); if(el){ el.classList.remove('framed-black','framed-silver','framed-wood'); el.classList.add(fr==='black'?'framed-black':(fr==='silver'?'framed-silver':'framed-wood')); saveCanvas(); } };
+
+  /* ----- Profile facts ----- */
+  const dod=document.getElementById('dod'), rel=document.getElementById('rel'), memo=document.getElementById('memo'), kaimyoP=document.getElementById('kaimyoP'), preview=document.getElementById('profilePreview'), nextAnnivEl=document.getElementById('nextAnniv'), gcalLink=document.getElementById('gcalLink');
+  function loadProfile(){ if(!currentId){ preview.style.display='none'; preview.innerHTML=''; return;} const data=JSON.parse(localStorage.getItem(key('facts'))||'{}'); dod.value=data.dod||''; rel.value=data.rel||''; memo.value=data.memo||''; kaimyoP.value=data.kaimyoP||''; renderPreview(); renderMemorials(); updateAnniversary(); }
+  function saveProfile(){ if(!ensureProfile()) return; const data={dod:dod.value, rel:rel.value, memo:memo.value, kaimyoP:kaimyoP.value}; localStorage.setItem(key('facts'), JSON.stringify(data)); renderPreview(); renderMemorials(); updateAnniversary(); }
+  function renderPreview(){ if(!dod.value && !rel.value && !memo.value && !kaimyoP.value){ preview.style.display='none'; preview.innerHTML=''; return;} preview.style.display='block'; preview.innerHTML = `<div class="badge-ok">保存済み</div><div style="margin-top:6px"><strong>没年月日：</strong>${dod.value||'-'}</div><div><strong>続柄/種別：</strong>${rel.value||'-'}</div><div><strong>戒名：</strong>${kaimyoP.value||'-'}</div><div><strong>思い出/メモ：</strong><div style="white-space:pre-wrap">${escapeHTML(memo.value||'')}</div></div>`; }
+  function escapeHTML(s){ return (s||'').replace(/[<>&]/g, t=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[t])); }
+  function parseDateInput(v){ if(!v) return null; const [y,m,d]=v.split('-').map(Number); return new Date(y, m-1, d); }
+  function renderMemorials(){ const list=document.getElementById('memorialList'); list.innerHTML=''; const base=parseDateInput(dod.value); if(!base) return; const labels=[{name:'一周忌', plus:1},{name:'三回忌', plus:2},{name:'七回忌', plus:6},{name:'十三回忌', plus:12},{name:'十七回忌', plus:16},{name:'二十三回忌', plus:22},{name:'二十七回忌', plus:26},{name:'三十三回忌', plus:32},{name:'三十七回忌', plus:36},{name:'五十回忌', plus:49}]; const today=new Date(); today.setHours(0,0,0,0); labels.forEach(o=>{ const dt=new Date(base); dt.setFullYear(base.getFullYear()+o.plus); const iso=dt.toISOString().slice(0,10); const item=document.createElement('div'); item.className='mem-item' + (dt>=today?' upcoming':''); item.innerHTML = `<div>${o.name}</div><div>${iso}</div>`; list.appendChild(item); }); }
+  function updateAnniversary(){ const base=parseDateInput(dod.value); if(!base){ nextAnnivEl.textContent='未設定'; gcalLink.href='#'; return; } const today=new Date(); const thisYear=new Date(today.getFullYear(), base.getMonth(), base.getDate()); const next = (thisYear>=today)? thisYear : new Date(today.getFullYear()+1, base.getMonth(), base.getDate()); const iso = next.toISOString().slice(0,10); nextAnnivEl.textContent = '次の命日：' + iso; const ymd = iso.replace(/-/g,''); const title = encodeURIComponent('命日（' + (kaimyoP.value||'故人') + '）'); const details = encodeURIComponent('デジタル仏壇アプリより作成（個人用メモ）'); const url = 'https://calendar.google.com/calendar/render?action=TEMPLATE&text='+title+'&dates='+ymd+'/'+ymd+'&details='+details; gcalLink.href = url; }
+  document.getElementById('btnSaveProfile').onclick=saveProfile; document.getElementById('btnClearProfile').onclick=()=>{ dod.value=''; rel.value=''; memo.value=''; kaimyoP.value=''; if(currentId) localStorage.removeItem(key('facts')); renderPreview(); document.getElementById('memorialList').innerHTML=''; updateAnniversary(); }; dod.onchange=()=>{ renderMemorials(); updateAnniversary(); }; kaimyoP.oninput=updateAnniversary;
+
+  /* ----- Portrait on altar ----- */
+  function placePortraitOnAltar(url, frame){
+    const el=addItem({id:'portrait', name:'遺影', img:url});
+    if(el){
+      el.classList.remove('framed-black','framed-silver','framed-wood');
+      el.classList.add(frame==='black'?'framed-black':(frame==='silver'?'framed-silver':'framed-wood'));
+      saveCanvas();
+    }
+  }
+
+  /* ----- Switch profile ----- */
+  function switchProfile(id, force){
+    try{ if(currentId) saveCanvas(); }catch(e){}
+    currentId = id; localStorage.setItem('mp_current', currentId);
+    frameChips.forEach(c=>c.classList.remove('active'));
+    selected=null; setBuyChip(null);
+    const fr = currentId ? (localStorage.getItem(key('portrait_frame')) || 'wood') : 'wood';
+    selectedFrame = fr; applyFrame(fr);
+    const statusVal = currentId ? (localStorage.getItem(key('portrait_status')) || 'none') : 'none';
+    const url = currentId ? localStorage.getItem(key('portrait_url')) : '';
+    overlay.style.display='none'; btnApprove.disabled=true; btnReject.disabled=true; pending=false;
+    if(statusVal==='approved' && url){
+      applyPortrait(url);
+      status.classList.remove('pending'); status.classList.add('approved');
+      status.innerHTML='<span class="badge">承認済み</span> / 遺影を表示しています';
+    }else if(statusVal==='pending'){
+      clearPortrait();
+      status.classList.remove('approved'); status.classList.add('pending');
+      status.innerHTML='<span class="badge">審査中</span> / 運営の承認をお待ちください';
+      overlay.style.display='flex'; btnApprove.disabled=false; btnReject.disabled=false;
+    }else{
+      clearPortrait();
+      status.classList.remove('approved','pending');
+      status.innerHTML='<span class="badge">未申請</span> / アップロードして承認を待ちます';
+    }
+    document.getElementById('btnPlacePortrait').disabled = !url;
+    loadCanvas();
+    loadProfile();
+    sel.value=currentId;
+  }
+
+  function ensureProfile(){
+    if(profiles.length && currentId) return true;
+    alert('はじめにプロフィールを作成してください。');
+    addWrap.style.display='flex';
+    return false;
+  }
+
+  // 初回：プロファイルがない場合は追加ダイアログを自動で開く
+  if(!profiles.length){
+    setTimeout(()=> addWrap.style.display='flex', 150);
+  }else{
+    switchProfile(currentId || profiles[0].id);
+  }
+
+  // escでシート類を閉じる
+  document.addEventListener('keydown',(e)=>{ if(e.key==='Escape'){ [sheet, sheetCatalog, sheetProduct, sheetIhai, sheetAltar, addWrap].forEach(s=>s.style.display='none'); }});
+})();
+</script>
+</body>
+</html>
