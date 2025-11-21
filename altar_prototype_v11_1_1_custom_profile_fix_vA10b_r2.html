@@ -1,0 +1,574 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>デジタル仏壇 v11.1.1 custom_profile_fix vA10b_r2</title>
+<style>
+:root{--bg:#f6f6f6;--card:#fff;--accent:#c59d5f;--text:#222}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans JP","Hiragino Sans","Yu Gothic",Meiryo,sans-serif;padding-bottom:84px}
+header{position:sticky;top:0;background:#fff;border-bottom:1px solid #eee;padding:10px 12px;z-index:20}
+h1{margin:0;font-size:16px}
+.nav{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;align-items:center}
+.tab{padding:8px 12px;border-radius:999px;border:1px solid #ddd;background:#fff;color:#333;cursor:pointer;font-weight:600}
+.tab.active{border-color:var(--accent);background:#fff7e8}
+.step{margin-left:auto;display:flex;gap:6px;align-items:center}
+.btn{padding:10px 14px;border-radius:12px;border:1px solid var(--accent);background:var(--accent);color:#fff;font-weight:700;cursor:pointer}
+.btn-outline{background:#fff;color:#c59d5f;border:1px solid #c59d5f}
+.btn-ghost{background:#fff;border:1px solid #ddd;color:#333}
+select.profile{padding:8px 12px;border-radius:12px;border:1px solid #ddd;background:#fff;min-width:140px}
+.container{max-width:1000px;margin:0 auto;padding:12px}
+.page{display:none}
+.page.active{display:block}
+.note{color:#666;font-size:12px;margin:8px 0}
+.stage{position:relative;border:1px dashed #e8e0cf;border-radius:16px;overflow:hidden;background:#fcfbf8;min-height:520px}
+.altar-bg{position:absolute;inset:0}
+.altar-bg img{width:100%;height:100%;object-fit:cover;opacity:.9;filter:saturate(.95)}
+.portrait-wrap{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(78vw,360px);height:calc(min(78vw,360px)*1.25);display:grid;place-items:center;z-index:2}
+.frame{position:relative;width:100%;height:100%;border-radius:14px;background:linear-gradient(#fefefe,#f7f3ea);border:8px solid #d8c9a5}
+.frame.black{border-color:#111;background:#f9f9f9}
+.frame.silver{border:10px solid #cfcfcf;background:linear-gradient(#fafafa,#f1f1f1)}
+.frame.wood{border:10px solid #8b5a2b;background:linear-gradient(#fefefe,#f7f3ea)}
+.portrait{position:absolute;inset:12px;border-radius:8px;background:#eee;overflow:hidden;display:grid;place-items:center}
+.portrait img{width:100%;height:100%;object-fit:cover}
+.silhouette{width:50%;opacity:.35;filter:grayscale(100%)}
+.status{position:absolute;left:12px;top:12px;background:#fff;padding:4px 10px;border-radius:999px;border:1px solid #eee;font-size:12px}
+.badge{font-weight:800}
+.overlay{position:absolute;inset:12px;background:rgba(255,255,255,.7);display:none;align-items:center;justify-content:center;font-weight:700;color:#333;border-radius:8px}
+.spinner{width:22px;height:22px;border:3px solid #bbb;border-top-color:#7a7a7a;border-radius:50%;animation:sp 1s linear infinite;margin-right:8px}
+@keyframes sp{to{transform:rotate(360deg)}}
+.panel{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.frame-tabs{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
+.chip{padding:8px 12px;border-radius:999px;border:1px solid #ddd;background:#fafafa;font-size:13px;cursor:pointer}
+.chip.active{border-color:var(--accent);background:#fff7e8}
+/* Bottom Sheet */
+.sheetWrap{position:fixed;inset:0;display:none;align-items:flex-end;justify-content:center;background:rgba(0,0,0,.35);z-index:50}
+.sheet{width:100%;max-width:1000px;background:var(--card);border-top-left-radius:20px;border-top-right-radius:20px;padding:0 0 16px;box-shadow:0 -8px 24px rgba(0,0,0,.2);max-height:calc(100vh - 10px);display:flex;flex-direction:column;overflow:hidden}
+.sheetHeader{position:sticky;top:0;background:#fff;border-bottom:1px solid #eee;padding:10px 12px;display:flex;gap:8px;align-items:center;z-index:2}
+.sheetHeader h3{margin:0;font-size:15px}
+.sheetHeader .spacer{flex:1}
+.catalog-tabs{display:flex;gap:8px;flex-wrap:wrap;padding:10px 12px;background:#fff;border-bottom:1px solid #eee}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:12px}
+#catalogGrid{flex:1 1 auto;overflow:auto}
+#altarGrid{flex:1 1 auto;overflow:auto}
+@media(min-width:720px){.grid{grid-template-columns:repeat(6,1fr)}}
+.entry{display:flex;flex-direction:column;border:1px solid #eee;border-radius:12px;overflow:hidden;background:#fff;cursor:pointer;text-align:center;min-height:158px}
+.entry .thumb{height:100px;background:#f3f3f3;flex:0 0 auto}
+.entry .thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.entry .name{flex:0 0 auto;display:flex;align-items:center;justify-content:center;color:#222;background:#fff;min-height:36px;padding:6px 6px 4px;font-size:12px;font-weight:700;line-height:1.2;white-space:normal;word-break:break-word;overflow-wrap:anywhere;z-index:1}
+.entry .type{flex:0 0 auto;font-size:11px;color:#777;background:#fff;padding:0 6px 8px}
+@media (max-width: 420px){ .entry{min-height:166px} .entry .thumb{height:88px} .entry .name{min-height:42px}}
+/* Stage / Canvas */
+.stage-wrap{margin-top:8px;border:1px dashed #e8e0cf;border-radius:16px;overflow:hidden;background:#fcfbf8}
+.stage2{position:relative;min-height:600px;touch-action:none}
+.canvas{position:relative;z-index:2;width:100%;height:100%}
+.hint{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);color:#777;font-size:13px;z-index:1;text-align:center}
+.item{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) scale(1);user-select:none;touch-action:none}
+.item img{display:block;max-width:300px;max-height:300px;width:220px;height:auto;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.12)}
+.item .label{position:absolute;left:50%;bottom:-20px;transform:translateX(-50%);font-size:12px;color:#333;background:rgba(255,255,255,.6);padding:2px 8px;border-radius:999px}
+.item .handle{position:absolute;right:-10px;bottom:-10px;width:22px;height:22px;border-radius:50%;background:#fff;border:2px solid var(--accent);display:grid;place-items:center;font-size:14px;cursor:nwse-resize}
+.item.selected{outline:2px dashed var(--accent);outline-offset:4px}
+.stack{position:absolute;right:8px;top:8px;display:flex;gap:6px;z-index:5;align-items:center}
+.stack .chip{padding:6px 10px;border:1px solid #ddd;border-radius:999px;background:#fff;font-size:12px;cursor:pointer}
+.stack .chip[disabled]{opacity:.35;cursor:not-allowed}
+.selinfo{font-size:12px;color:#555}
+/* Incense/Bell */
+.incense-layer{position:absolute;left:0;right:0;bottom:0;top:0;pointer-events:none;z-index:3}
+.incense{position:absolute;width:8px;height:18px;background:linear-gradient(180deg,#6b4d2e,#3b2a18);border-radius:2px;box-shadow:0 2px 4px rgba(0,0,0,.2)}
+.incense::after{content:"";position:absolute;left:50%;top:-6px;transform:translateX(-50%);width:6px;height:6px;background:radial-gradient(circle,#ffcf6d,#ff8a00);border-radius:50%;filter:blur(.3px)}
+.smoke{position:absolute;left:50%;bottom:42px;width:12px;height:12px;border-radius:50%;background:rgba(180,180,180,.35);filter:blur(1px);animation:smoke 2.4s linear forwards}
+@keyframes smoke{0%{transform:translate(-50%,0) scale(1);opacity:.45}60%{transform:translate(-50%,-70px) scale(1.3);opacity:.25}100%{transform:translate(-50%,-120px) scale(1.6);opacity:0}}
+.timerTag{position:absolute;left:50%;bottom:0;transform:translate(-50%,8px);font-size:12px;background:rgba(255,255,255,.8);padding:2px 8px;border-radius:999px;border:1px solid #eee;color:#333}
+/* Ihai overlay */
+.ihaiOverlay{position:absolute;inset:0;pointer-events:none}
+.ihaiOverlay .kaimyo{position:absolute;top:12%;bottom:12%;left:50%;transform:translateX(-50%);writing-mode:vertical-rl;text-orientation:mixed;font-family:"Yu Mincho","Hiragino Mincho ProN","Noto Serif JP",serif;font-weight:600;letter-spacing:2px;line-height:1.45;color:#1d140b;text-shadow:0 1px 1px rgba(255,255,255,.4),0 1px 12px rgba(0,0,0,.15);font-size:22px;white-space:pre-wrap;text-align:center}
+.framed-black img{border:8px solid #111;border-radius:8px}
+.framed-silver img{border:10px solid #cfcfcf;border-radius:8px}
+.framed-wood img{border:10px solid #8b5a2b;border-radius:8px}
+/* Profile & Voice */
+.form{display:grid;gap:10px;max-width:720px}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.row label{width:110px;color:#444}
+.row input,.row select,.row textarea{flex:1;min-width:200px;padding:8px 10px;border:1px solid #ddd;border-radius:10px}
+.row textarea{min-height:140px}
+.badge-ok{display:inline-block;padding:2px 8px;border-radius:999px;background:#e8f7ec;border:1px solid #bfe3c9;color:#205b2f;font-size:12px}
+.bottomBar{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid #eee;padding:10px 12px;z-index:40;display:flex;gap:8px;align-items:center;justify-content:space-between}
+.bb-group{display:flex;gap:8px;align-items:center}
+.bb-btn{flex:1;padding:12px 14px;border-radius:12px;border:1px solid #ddd;background:#fafafa;font-weight:700;cursor:pointer}
+.bb-primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.bb-wide{min-width:120px}
+.debug{position:fixed;right:10px;bottom:86px;background:#fff;border:1px dashed #bbb;border-radius:12px;padding:6px 10px;font-size:11px;color:#444;z-index:90}
+</style>
+</head>
+<body>
+<header>
+  <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+    <h1>デジタル仏壇 v11.1.1 custom_profile_fix vA10b_r2</h1>
+    <select id="profileSelect" class="profile"></select>
+    <button class="btn-ghost" id="btnAddProfile">＋ 追加</button>
+    <button class="btn-ghost" id="btnRenameProfile">✎ 名前変更</button>
+    <button class="btn-ghost" id="btnDeleteProfile">削除</button>
+    <button class="btn-ghost" id="btnInitAll">初期化</button>
+  </div>
+  <div class="nav">
+    <button class="tab active" data-go="p1">① 遺影</button>
+    <button class="tab" data-go="p2">② 仏壇</button>
+    <button class="tab" data-go="p3">③ プロフィール</button>
+    <button class="tab" data-go="p4">④ 音声</button>
+    <div class="step">
+      <button class="btn-ghost" id="prevBtn">← 前へ</button>
+      <button class="btn" id="nextBtn">次へ →</button>
+    </div>
+  </div>
+</header>
+
+<div class="container">
+  <!-- p1 Portrait -->
+  <section id="p1" class="page active">
+    <div class="stage">
+      <div class="altar-bg"><img src="https://picsum.photos/seed/altarA/1600/1000" alt=""></div>
+      <div class="portrait-wrap">
+        <div class="frame wood" id="portraitFrame">
+          <div class="portrait" id="portrait">
+            <img class="silhouette" id="silhouette" src="https://upload.wikimedia.org/wikipedia/commons/8/89/Portrait_Placeholder.png" alt="シルエット">
+          </div>
+          <div class="overlay" id="overlay"><div class="spinner"></div>審査中...</div>
+          <div class="status" id="status"><span class="badge">未申請</span> / アップロードして承認を待ちます</div>
+        </div>
+      </div>
+    </div>
+    <div class="panel">
+      <button class="btn" id="btnApply">遺影を申請</button>
+      <span style="display:flex;gap:8px;align-items:center">
+        <span style="font-size:12px;color:#555">運営（擬似）</span>
+        <button class="btn-outline" id="btnApprove" disabled>承認</button>
+        <button class="btn-ghost" id="btnReject" disabled>却下</button>
+      </span>
+    </div>
+    <div class="frame-tabs">
+      <span>フレーム：</span>
+      <button class="chip" data-frame="black">黒縁</button>
+      <button class="chip active" data-frame="wood">木目</button>
+      <button class="chip" data-frame="silver">銀縁</button>
+    </div>
+    <p class="note">承認すると②仏壇ページに遺影が自動配置されます。プロフィールごとに独立保存。</p>
+  </section>
+
+  <!-- p2 Altar -->
+  <section id="p2" class="page">
+    <div class="panel">
+      <button class="btn" id="btnAltar">仏壇を選ぶ</button>
+      <a class="btn btn-outline" id="btnBuy" href="#" target="_blank" rel="noopener" aria-disabled="true">仏壇を購入</a>
+      <button class="btn btn-outline" id="btnCatalog">カタログ（仏具・お供え）</button>
+      <button class="btn-ghost" id="btnEdit">編集モード：OFF</button>
+      <button class="btn-outline" id="btnIhai">位牌テキスト編集</button>
+      <button class="btn-outline" id="btnPlacePortrait" disabled>遺影を配置</button>
+      <button class="btn" id="btnIncense15">線香（15秒）</button>
+      <button class="btn" id="btnIncense30">線香（30秒）</button>
+      <button class="btn" id="btnIncense60">線香（1分）</button>
+      <button class="btn-outline" id="btnRing">鈴を鳴らす</button>
+    </div>
+    <div class="stage-wrap">
+      <div class="stage2" id="stage2">
+        <div class="altar-bg"><img id="altarBg" src="https://picsum.photos/seed/altarA/1600/1000" alt=""></div>
+        <div class="canvas" id="canvas"></div>
+        <div class="incense-layer" id="incenseLayer" aria-live="polite"></div>
+        <div class="hint" id="hint">「カタログ」で仏具・お供えを配置。線香は香炉の位置から煙が上がります。</div>
+        <div class="stack">
+          <span class="chip" id="buySelected" disabled>購入ページ</span>
+          <span class="chip" id="front">最前面へ</span>
+          <span class="chip" id="back">最背面へ</span>
+          <span class="chip" id="remove">削除</span>
+          <span class="selinfo" id="selInfo">選択中：なし</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sheets -->
+    <div class="sheetWrap" id="sheetAltar"><div class="sheet"><div class="sheetHeader"><button class="btn-ghost" id="btnAltarClose">閉じる</button><div class="spacer"></div><h3>仏壇を選ぶ</h3></div><div class="grid" id="altarGrid"></div></div></div>
+
+    <div class="sheetWrap" id="sheetCatalog">
+      <div class="sheet">
+        <div class="sheetHeader">
+          <button class="btn-ghost" id="btnCatalogClose">閉じる</button>
+          <div class="spacer"></div>
+          <h3>カタログ</h3>
+        </div>
+        <div class="catalog-tabs" id="tabs2">
+          <button class="chip active" data-cat="main">本尊・掛け軸・位牌</button>
+          <button class="chip" data-cat="vessels">供物・器類</button>
+          <button class="chip" data-cat="bell">おりん・火立・香炉</button>
+          <button class="chip" data-cat="tools">道具</button>
+          <button class="chip" data-cat="offering">お供え</button>
+        </div>
+        <div class="grid" id="catalogGrid"></div>
+      </div>
+    </div>
+
+    <div class="sheetWrap" id="sheetProduct">
+      <div class="sheet">
+        <div class="sheetHeader">
+          <button class="btn-ghost" id="btnProdCloseTop">閉じる</button>
+          <div class="spacer"></div>
+          <h3>商品詳細</h3>
+        </div>
+        <div style="display:flex;gap:16px;flex-wrap:wrap;padding:12px">
+          <div style="flex:1;min-width:220px">
+            <img id="prodImg" src="" alt="" style="width:100%;border-radius:12px;border:1px solid #eee">
+          </div>
+          <div style="flex:2;min-width:260px">
+            <h3 id="prodName" style="margin:0 0 6px"></h3>
+            <p id="prodDesc" style="margin:0 0 8px;color:#555">コラボ商品のサンプル詳細テキストです。</p>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <button class="btn" id="btnProdPlace">仏壇に配置</button>
+              <a class="btn-outline btn" id="btnProdBuy" href="#" target="_blank" rel="noopener">商品ページへ</a>
+              <button class="btn-ghost" id="btnProdClose">閉じる</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sheetWrap" id="sheetIhai"><div class="sheet">
+      <div class="sheetHeader"><button class="btn-ghost" id="btnIhaiCloseTop">閉じる</button><div class="="spacer"></div><h3>位牌テキスト編集</h3></div>
+      <div style="padding:12px">
+        <div class="row"><label for="kaimyoInput">戒名・俗名（縦）</label><input id="kaimyoInput" type="text" placeholder="例：釋○○信士／信女 または 山田太郎"></div>
+        <div class="row"><label for="kaimyoSize">文字サイズ</label><input id="kaimyoSize" type="range" min="16" max="36" value="22"></div>
+        <div class="row" style="justify-content:flex-end;gap:8px">
+          <button class="btn-ghost" id="btnIhaiClear">文字を消す</button>
+          <button class="btn" id="btnIhaiApply">反映する</button>
+          <button class="btn-outline" id="btnIhaiClose">閉じる</button>
+        </div>
+      </div>
+    </div></div>
+  </section>
+
+  <!-- p3 Profile -->
+  <section id="p3" class="page">
+    <h3 style="margin:6px 0 10px">プロフィール（記録）</h3>
+    <div class="form">
+      <div class="row"><label for="dod">没年月日</label><input id="dod" type="date"></div>
+      <div class="row"><label for="rel">続柄 / 種別</label>
+        <select id="rel">
+          <option value="">選択してください</option>
+          <option>祖父</option><option>祖母</option><option>父</option><option>母</option>
+          <option>夫</option><option>妻</option><option>兄弟</option><option>姉妹</option>
+          <option>息子</option><option>娘</option><option>親戚</option><option>友人</option>
+          <option>ペット</option><option>推し</option><option>その他</option>
+        </select>
+      </div>
+      <div class="row"><label for="kaimyoP">戒名</label><input id="kaimyoP" type="text" placeholder="例：釋◯◯信士／信女"></div>
+      <div class="row"><label for="memo">思い出 / メモ</label><textarea id="memo" placeholder="例：よく一緒に散歩しました…／推しのここが好き…"></textarea></div>
+      <div class="row" style="justify-content:flex-end;gap:8px">
+        <button class="btn-ghost" id="btnClearProfile">リセット</button>
+        <button class="btn" id="btnSaveProfile">保存</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- p4 Voice -->
+  <section id="p4" class="page">
+    <h3 style="margin:6px 0 10px">音声（擬似体験）</h3>
+    <div class="form">
+      <div class="row"><label>権利・同意</label>
+        <div><label><input id="voiceConsent" type="checkbox"> 自分がアップした音声のみ再生可（このプロフィール限定）</label></div>
+      </div>
+      <div class="row"><label>音声アップロード</label>
+        <input id="voiceFile" type="file" accept="audio/*">
+      </div>
+      <div class="row"><label>モデル状態</label>
+        <div>
+          <span id="modelState" class="badge-ok" style="border-color:#ddd;background:#f8f8f8;color:#444">未作成</span>
+          <button class="btn-ghost" id="btnModelCreate">モデル作成（擬似）</button>
+          <button class="btn-ghost" id="btnModelReset">リセット</button>
+        </div>
+      </div>
+      <div class="row"><label>自由台詞</label>
+        <input id="customSay" type="text" placeholder="例：おはよう、いつもありがとう">
+        <button class="btn" id="btnAddSay" style="flex:0 0 auto">追加</button>
+      </div>
+      <div class="row"><label>台詞リスト</label>
+        <div style="flex:1;display:flex;flex-direction:column;gap:6px">
+          <div id="sayList" style="display:grid;gap:6px"></div>
+          <div id="sayOpts" style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+            <label style="display:flex;gap:6px;align-items:center">
+              <input id="favFirst" type="checkbox"> お気に入りを上に表示
+            </label>
+            <span style="font-size:12px;color:#666">※ 並べ替え（↑↓やトップ）で保存順も変更できます</span>
+          </div>
+        </div>
+      </div>
+      <div class="row"><label>自動あいさつ</label>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+          <label><input id="autoGreet" type="checkbox"> ページ表示時に1回だけ再生</label>
+          <input id="greetText" type="text" placeholder="例：今日も来てくれてありがとう" style="min-width:240px">
+          <button class="btn-ghost" id="btnTestGreet" style="flex:0 0 auto">試しに再生</button>
+        </div>
+      </div>
+      <div class="row"><label>プリセット</label>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn" id="sayThanks">「ありがとう」</button>
+          <button class="btn" id="sayVisit">「たまには墓参りにも来てね」</button>
+          <audio id="voiceAudio" controls style="display:none;max-width:300px"></audio>
+        </div>
+      </div>
+      <p class="note">※ 実際のAIによる声再現ではありません。テキストはブラウザのTTSで読み上げ、音声をアップした場合はその音源を再生します（端末内・このプロフィールのみ保存）。</p>
+    </div>
+  </section>
+</div>
+
+<div class="bottomBar" id="bottomBar">
+  <div class="bb-group"><button class="bb-btn" id="bbPrev">← 前へ</button></div>
+  <div class="bb-group" id="bbCenter"></div>
+  <div class="bb-group"><button class="bb-btn bb-primary bb-wide" id="bbNext">次へ →</button></div>
+</div>
+<div class="debug" id="debug">-</div>
+
+<script>
+(function(){
+  const NS='mpB_';
+  function kProfileList(){ return NS+'profiles'; }
+  function kCurrent(){ return NS+'current'; }
+  function kPage(){ return NS+'current_page'; }
+  function k(scope){ return NS + currentId + '_' + scope; }
+  function loadProfiles(){ try{ const js=localStorage.getItem(kProfileList()); const a = js ? JSON.parse(js) : []; return Array.isArray(a)?a:[]; }catch(e){ return []; } }
+  function saveProfiles(arr){ localStorage.setItem(kProfileList(), JSON.stringify(arr)); }
+  let profiles = loadProfiles();
+  if(!profiles.length){ profiles = [{id:'profile1', label:'祖父', type:'human'},{id:'profile2', label:'祖母', type:'human'}]; saveProfiles(profiles); }
+  let currentId = localStorage.getItem(kCurrent()) || profiles[0].id;
+
+  const sel = document.getElementById('profileSelect');
+  const tabs=[...document.querySelectorAll('.tab')];
+  const prevBtn=document.getElementById('prevBtn'), nextBtn=document.getElementById('nextBtn');
+  const bbPrev=document.getElementById('bbPrev'), bbNext=document.getElementById('bbNext'), bbCenter=document.getElementById('bbCenter');
+  const pages=['p1','p2','p3','p4'];
+  const debug=document.getElementById('debug');
+  function debugInfo(){ debug.textContent = `current:${currentId}`; }
+
+  function renderSelect(){
+    sel.innerHTML=''; profiles.forEach(p=>{ const opt=document.createElement('option'); opt.value=p.id; opt.textContent=p.label; sel.appendChild(opt); }); sel.value=currentId;
+  }
+  renderSelect(); sel.onchange=()=> switchProfile(sel.value);
+
+  const addBtn=document.getElementById('btnAddProfile'), renBtn=document.getElementById('btnRenameProfile'), delBtn=document.getElementById('btnDeleteProfile'), initBtn=document.getElementById('btnInitAll');
+  addBtn.onclick=()=>{ const name=prompt('表示名（例：祖父/祖母/ペット/推し）','新規プロフィール'); const id=(name||'p').replace(/\s+/g,'').toLowerCase().slice(0,8)||'p'; profiles.push({id, label:name||'新規プロフィール', type:'human'}); saveProfiles(profiles); currentId=id; localStorage.setItem(kCurrent(),currentId); renderSelect(); clearProfileState(); show('p1'); };
+  renBtn.onclick=()=>{ const p=profiles.find(x=>x.id===currentId); const name=prompt('新しい表示名', p?p.label:''); if(name&&name.trim()){ p.label=name.trim(); saveProfiles(profiles); renderSelect(); } };
+  delBtn.onclick=()=>{ if(!confirm('このプロフィールを削除しますか？')) return; const prefix = NS + currentId + '_'; Object.keys(localStorage).forEach(k=>{ if(k.startsWith(prefix)) localStorage.removeItem(k); }); profiles=profiles.filter(x=>x.id!==currentId); saveProfiles(profiles); currentId=profiles[0]?.id||'profile1'; if(!profiles.length){ profiles=[{id:'profile1',label:'プロフィール1',type:'human'}]; saveProfiles(profiles); } localStorage.setItem(kCurrent(),currentId); renderSelect(); switchProfile(currentId,true); };
+  initBtn.onclick=()=>{ if(!confirm('全データを初期化します。よろしいですか？')) return; Object.keys(localStorage).forEach(k=>{ if(k.startsWith(NS)) localStorage.removeItem(k); }); profiles=[{id:'profile1',label:'プロフィール1',type:'human'}]; saveProfiles(profiles); currentId='profile1'; localStorage.setItem(kCurrent(),currentId); renderSelect(); clearAllUI(); show('p1'); };
+
+  function current(){ return pages.find(pid=>document.getElementById(pid).classList.contains('active')); }
+  function show(id){ pages.forEach(pid=>{document.getElementById(pid).classList.toggle('active', pid===id);}); tabs.forEach(t=>t.classList.toggle('active', t.dataset.go===id)); localStorage.setItem(kPage(), id); updateNav(id); if(id==='p3') loadProfile(); if(id==='p4') loadVoice(); renderBottomBar(id); }
+  function updateNav(id){ const i=pages.indexOf(id); prevBtn.disabled=(i===0); nextBtn.disabled=(i===pages.length-1); bbPrev.disabled=prevBtn.disabled; bbNext.disabled=nextBtn.disabled; }
+  tabs.forEach(t=>t.onclick=()=>show(t.dataset.go)); prevBtn.onclick=bbPrev.onclick=()=>{ const i=pages.indexOf(current()); if(i>0) show(pages[i-1]); }; nextBtn.onclick=bbNext.onclick=()=>{ const i=pages.indexOf(current()); if(i<pages.length-1) show(pages[i+1]); };
+
+  function renderBottomBar(id){
+    bbCenter.innerHTML='';
+    if(id==='p1'){ const a=document.createElement('button'); a.className='bb-btn bb-primary'; a.textContent='遺影を申請'; a.onclick=()=>document.getElementById('btnApply').click(); bbCenter.appendChild(a); }
+    if(id==='p2'){ ['btnCatalog','btnEdit','btnIncense30','btnRing'].forEach(x=>{ const b=document.createElement('button'); b.className='bb-btn'; b.textContent={'btnCatalog':'カタログ','btnEdit':'編集切替','btnIncense30':'線香','btnRing':'鈴'}[x]; b.onclick=()=>document.getElementById(x).click(); bbCenter.appendChild(b); }); }
+    if(id==='p3'){ const s=document.createElement('button'); s.className='bb-btn bb-primary'; s.textContent='保存'; s.onclick=()=>document.getElementById('btnSaveProfile').click(); bbCenter.appendChild(s); }
+    if(id==='p4'){ [['btnModelCreate','モデル作成（擬似）'],['sayThanks','「ありがとう」'],['sayVisit','「墓参りにも来てね」']].forEach(([id,label])=>{ const b=document.createElement('button'); b.className='bb-btn'; b.textContent=label; b.onclick=()=>document.getElementById(id).click(); bbCenter.appendChild(b); }); }
+  }
+
+  // p1 Portrait
+  const btnApply=document.getElementById('btnApply'), btnApprove=document.getElementById('btnApprove'), btnReject=document.getElementById('btnReject'), frameEl=document.getElementById('portraitFrame'), portrait=document.getElementById('portrait'), silhouette=document.getElementById('silhouette'), overlay=document.getElementById('overlay'), status=document.getElementById('status'); let pending=false; let selectedFrame='wood';
+  const frameChips=[...document.querySelectorAll('.frame-tabs .chip')];
+  frameChips.forEach(ch=>ch.onclick=()=>{ frameChips.forEach(c=>c.classList.remove('active')); ch.classList.add('active'); selectedFrame=ch.dataset.frame; localStorage.setItem(k('portrait_frame'), selectedFrame); frameEl.classList.remove('black','silver','wood'); frameEl.classList.add(selectedFrame); });
+  const SAMPLES=['https://picsum.photos/seed/portraitA/600/750','https://picsum.photos/seed/portraitB/600/750','https://picsum.photos/seed/portraitC/600/750','https://picsum.photos/seed/portraitD/600/750'];
+  let chosenURL='';
+  btnApply.onclick=()=>{
+    const wrap=document.createElement('div'); wrap.className='sheetWrap'; wrap.id='sheetApply'; document.body.appendChild(wrap);
+    wrap.innerHTML=`<div class="sheet"><div class="sheetHeader"><button class="btn-ghost" id="x">閉じる</button><div class="spacer"></div><h3>遺影の申請</h3></div><div style="padding:12px"><input id="fi" type="file" accept="image/*"><p style="margin:12px 0 6px">サンプルから選ぶ</p><div class="grid" id="sg"></div><div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px"><button class="btn-ghost" id="c">やめる</button><button class="btn" id="s" disabled>申請する</button></div></div></div>`;
+    const sg=wrap.querySelector('#sg'); SAMPLES.forEach((u,i)=>{ const b=document.createElement('button'); b.className='entry'; b.innerHTML=`<div class="thumb"><img src="${u}"></div><div class="name">サンプル${i+1}</div>`; b.onclick=()=>{ chosenURL=u; wrap.querySelectorAll('.entry').forEach(e=>e.style.outline=''); b.style.outline='2px solid var(--accent)'; wrap.querySelector('#s').disabled=false; }; sg.appendChild(b); });
+    wrap.querySelector('#fi').onchange=(e)=>{ const f=e.target.files&&e.target.files[0]; chosenURL=f?URL.createObjectURL(f):''; wrap.querySelector('#s').disabled=!chosenURL; };
+    ;['#x','#c'].forEach(sel=> wrap.querySelector(sel).onclick=()=>wrap.remove());
+    wrap.querySelector('#s').onclick=()=>{ wrap.remove(); pending=true; overlay.style.display='flex'; status.innerHTML='<span class="badge">審査中</span> / 承認待ち'; btnApprove.disabled=false; btnReject.disabled=false; localStorage.setItem(k('portrait_status'),'pending'); };
+  };
+  btnApprove.onclick=()=>{ if(!pending) return; applyPortrait(chosenURL); overlay.style.display='none'; status.innerHTML='<span class="badge">承認済み</span> / 遺影を表示しています'; localStorage.setItem(k('portrait_url'), chosenURL); localStorage.setItem(k('portrait_frame'), selectedFrame); localStorage.setItem(k('portrait_status'),'approved'); btnApprove.disabled=true; btnReject.disabled=true; pending=false; show('p2'); setTimeout(()=>{ placePortraitOnAltar(chosenURL, selectedFrame); saveCanvas(); }, 50); };
+  btnReject.onclick=()=>{ if(!pending) return; chosenURL=''; overlay.style.display='none'; status.innerHTML='<span class="badge">未申請</span> / アップロードして承認を待ちます'; btnApprove.disabled=true; btnReject.disabled=true; pending=false; localStorage.removeItem(k('portrait_url')); localStorage.setItem(k('portrait_status'),'none'); };
+  function applyPortrait(url){ portrait.innerHTML=''; if(url){ const img=document.createElement('img'); img.src=url; portrait.appendChild(img); } else { portrait.appendChild(silhouette); } }
+
+  // p2 Altar, catalog
+  const stage2=document.getElementById('stage2'), canvas=document.getElementById('canvas'), incenseLayer=document.getElementById('incenseLayer'), hint=document.getElementById('hint');
+  const btnAltar=document.getElementById('btnAltar'), sheetAltar=document.getElementById('sheetAltar'), altarGrid=document.getElementById('altarGrid'), altarBg=document.getElementById('altarBg'), btnBuy=document.getElementById('btnBuy'), btnAltarClose=document.getElementById('btnAltarClose');
+  const btnCatalog=document.getElementById('btnCatalog'), sheetCatalog=document.getElementById('sheetCatalog'), catalogGrid=document.getElementById('catalogGrid'), tabs2=document.getElementById('tabs2'), btnCatalogClose=document.getElementById('btnCatalogClose');
+  const sheetProduct=document.getElementById('sheetProduct'), prodImg=document.getElementById('prodImg'), prodName=document.getElementById('prodName'), btnProdPlace=document.getElementById('btnProdPlace'), btnProdBuy=document.getElementById('btnProdBuy'), btnProdClose=document.getElementById('btnProdClose'), btnProdCloseTop=document.getElementById('btnProdCloseTop');
+  const btnEdit=document.getElementById('btnEdit'), front=document.getElementById('front'), back=document.getElementById('back'), remove=document.getElementById('remove'), buySelected=document.getElementById('buySelected'), selInfo=document.getElementById('selInfo');
+  const btnIncense15=document.getElementById('btnIncense15'), btnIncense30=document.getElementById('btnIncense30'), btnIncense60=document.getElementById('btnIncense60'), btnRing=document.getElementById('btnRing');
+  const btnIhai=document.getElementById('btnIhai'), sheetIhai=document.getElementById('sheetIhai'), kaimyoInput=document.getElementById('kaimyoInput'), kaimyoSize=document.getElementById('kaimyoSize'), btnIhaiApply=document.getElementById('btnIhaiApply'), btnIhaiClose=document.getElementById('btnIhaiClose'), btnIhaiCloseTop=document.getElementById('btnIhaiCloseTop'), btnIhaiClear=document.getElementById('btnIhaiClear');
+  const btnPlacePortrait=document.getElementById('btnPlacePortrait');
+  let editMode=false, selected=null, zCounter=10, currentCat='main'; let currentProduct=null;
+
+  const ALTARS=[
+    {id:'a',name:'仏壇A（明るめ木目）',img:'https://picsum.photos/seed/altarA/1600/1000',buy:'https://example.com/butsudanA'},
+    {id:'b',name:'仏壇B（ダーク系）',img:'https://picsum.photos/seed/altarB/1600/1000',buy:'https://example.com/butsudanB'},
+    {id:'c',name:'仏壇C（シンプル）',img:'https://picsum.photos/seed/altarC/1600/1000',buy:'https://example.com/butsudanC'}
+  ];
+  btnAltar.onclick=()=>{ sheetAltar.style.display='flex'; altarGrid.innerHTML=''; ALTARS.forEach(a=>{ const el=document.createElement('button'); el.className='entry'; el.innerHTML=`<div class="thumb"><img src="${a.img}"></div><div class="name">${a.name}</div>`; el.onclick=()=>{ altarBg.src=a.img; btnBuy.href=a.buy; btnBuy.setAttribute('aria-disabled','false'); sheetAltar.style.display='none'; saveCanvas(); }; altarGrid.appendChild(el); }); };
+  btnAltarClose.onclick=()=> sheetAltar.style.display='none'; sheetAltar.onclick=(e)=>{ if(e.target===sheetAltar) sheetAltar.style.display='none'; };
+
+  const CATALOG={
+    main:[{id:'gohonzon',name:'御本尊',img:'https://picsum.photos/seed/gohonzon/600/800'},{id:'kakejiku',name:'掛け軸',img:'https://picsum.photos/seed/kakejiku/600/800'},{id:'ihai-m',name:'位牌（中）',img:'https://picsum.photos/seed/ihaiM/500/750',kind:'ihai'}],
+    vessels:[{id:'buppanki',name:'仏飯器',img:'https://picsum.photos/seed/buppanki/800/600'},{id:'hanadate',name:'花立',img:'https://picsum.photos/seed/hanadate/800/600'}],
+    bell:[{id:'orin',name:'おりん',img:'https://picsum.photos/seed/orin/800/600'},{id:'koro',name:'香炉',img:'https://picsum.photos/seed/koro/800/600'}],
+    tools:[{id:'matchkeshi',name:'マッチ消',img:'https://picsum.photos/seed/matchkeshi/800/600'},{id:'senkosashi',name:'線香差',img:'https://picsum.photos/seed/senkosashi/800/600'}],
+    offering:[
+      {id:'flower-white',name:'仏花（白）',img:'https://picsum.photos/seed/flower1/600/600'},
+      {id:'fruit-apple',name:'りんご',img:'https://picsum.photos/seed/fruit3/600/600'},
+      {id:'wagashi',name:'和菓子',img:'https://picsum.photos/seed/sweets1/600/600'},
+      {id:'green-tea',name:'緑茶',img:'https://picsum.photos/seed/drink1/600/600'},
+      {id:'brand-juice',name:'瓶ジュース（コラボ）',img:'https://picsum.photos/seed/brandjuice/600/600',url:'https://example.com/collab-juice'}
+    ]
+  };
+  btnCatalog.onclick=()=>{ sheetCatalog.style.display='flex'; renderCatalog(); };
+  btnCatalogClose.onclick=()=> sheetCatalog.style.display='none'; sheetCatalog.onclick=(e)=>{ if(e.target===sheetCatalog) sheetCatalog.style.display='none'; };
+  tabs2.onclick=(e)=>{ if(e.target.matches('.chip')){ tabs2.querySelectorAll('.chip').forEach(c=>c.classList.remove('active')); e.target.classList.add('active'); currentCat=e.target.dataset.cat; renderCatalog(); } };
+  function renderCatalog(){ catalogGrid.innerHTML=''; (CATALOG[currentCat]||[]).forEach(item=>{ const el=document.createElement('button'); el.className='entry'; el.innerHTML=`<div class="thumb"><img src="${item.img}"></div><div class="name">${item.name}</div><div class="type">${item.url?'商品詳細':'タップで追加'}</div>`; el.onclick=()=>{ if(item.url){ openProduct(item);} else { addItem(item); sheetCatalog.style.display='none'; } }; catalogGrid.appendChild(el); }); }
+  function openProduct(item){ currentProduct=item; prodImg.src=item.img; prodName.textContent=item.name; btnProdBuy.href=item.url||'#'; document.getElementById('sheetProduct').style.display='flex'; }
+  ;[btnProdClose,btnProdCloseTop].forEach(b=> b.onclick=()=> document.getElementById('sheetProduct').style.display='none');
+  btnProdPlace.onclick=()=>{ if(!currentProduct) return; addItem(currentProduct); document.getElementById('sheetProduct').style.display='none'; sheetCatalog.style.display='none'; };
+
+  function addItem(data){
+    hint.style.display='none';
+    const el=document.createElement('div'); el.className='item'; el.style.zIndex=(++zCounter);
+    el.dataset.url=data.url||''; el.dataset.kind=data.kind||''; el.dataset.id=data.id||'';
+    el.innerHTML = `<img src="${data.img}" alt="${data.name}"><div class="label">${data.name}</div><div class="handle">↘</div>`;
+    if(el.dataset.kind==='ihai'){ const ov=document.createElement('div'); ov.className='ihaiOverlay'; ov.innerHTML='<div class="kaimyo"></div>'; el.appendChild(ov); }
+    canvas.appendChild(el); makeInteractive(el); select(el); saveCanvas(); return el;
+  }
+
+  // interactions
+  let selected=null; function setBuyChip(el){ const url=el&&el.dataset?el.dataset.url:''; url?buySelected.removeAttribute('disabled'):buySelected.setAttribute('disabled',''); }
+  function updateSelInfo(){ selInfo.textContent = '選択中：' + (selected ? (selected.dataset.id||selected.querySelector('.label')?.textContent||'項目') : 'なし'); }
+  function setSelected(el){ canvas.querySelectorAll('.item').forEach(i=>i.classList.remove('selected')); if(el) el.classList.add('selected'); selected=el; setBuyChip(el); updateSelInfo(); }
+  function select(el){ setSelected(el); }
+  btnEdit.onclick=()=>{ editMode=!editMode; btnEdit.textContent='編集モード：'+(editMode?'ON':'OFF'); canvas.querySelectorAll('.item .handle').forEach(h=>h.style.display=editMode?'grid':'none'); };
+  canvas.addEventListener('pointerdown',(e)=>{ if(e.target===canvas){ select(null);} });
+  const front=document.getElementById('front'), back=document.getElementById('back'), remove=document.getElementById('remove');
+  front.onclick=()=>{ if(selected){ selected.style.zIndex=(++zCounter); saveCanvas(); } };
+  back.onclick=()=>{ if(selected){ selected.style.zIndex='1'; saveCanvas(); } };
+  remove.onclick=()=>{ if(selected){ selected.remove(); saveCanvas(); setSelected(null); } };
+  document.getElementById('buySelected').onclick=()=>{ if(!selected) return; const url=selected.dataset.url; if(url) window.open(url, '_blank'); };
+
+  function makeInteractive(el){
+    const img=el.querySelector('img'); const handle=el.querySelector('.handle'); handle.style.display=editMode?'grid':'none';
+    let dragging=false,startX=0,startY=0,baseLeft=0,baseTop=0;
+    el.addEventListener('pointerdown', (e)=>{ if(!editMode){ select(el); return;} if(e.target===handle) return; dragging=true; el.setPointerCapture(e.pointerId); startX=e.clientX; startY=e.clientY; const rect=el.getBoundingClientRect(), parent=canvas.getBoundingClientRect(); baseLeft=rect.left-parent.left; baseTop=rect.top-parent.top; select(el); e.preventDefault(); });
+    el.addEventListener('pointermove', (e)=>{ if(!dragging) return; const dx=e.clientX-startX,dy=e.clientY-startY; el.style.left=(baseLeft+dx)+'px'; el.style.top=(baseTop+dy)+'px'; el.style.transform='translate(0,0)'; });
+    el.addEventListener('pointerup', ()=>{ if(dragging){ dragging=false; saveCanvas(); } } );
+    const handle2=handle; let resizing=false,startW=0,startH=0,rStartX=0;
+    handle2.addEventListener('pointerdown',(e)=>{ if(!editMode) return; resizing=true; handle2.setPointerCapture(e.pointerId); rStartX=e.clientX; const rect=img.getBoundingClientRect(); startW=rect.width; startH=rect.height; select(el); e.preventDefault(); e.stopPropagation(); });
+    handle2.addEventListener('pointermove',(e)=>{ if(!resizing) return; const dx=e.clientX-rStartX,ratio=startW/startH; let newW=Math.max(80,startW+dx); img.style.width=newW+'px'; img.style.height=(newW/ratio)+'px'; });
+    handle2.addEventListener('pointerup', ()=>{ if(resizing){ resizing=false; saveCanvas(); } });
+    el.addEventListener('click', ()=> select(el) );
+  }
+
+  // incense / bell
+  const incenseLayer=document.getElementById('incenseLayer'); let incenseTimers=[];
+  function stopIncenseAll(){ incenseTimers.forEach(t=>{ if(t.smokeInterval) clearInterval(t.smokeInterval); if(t.tick) clearInterval(t.tick); if(t.endTimeout) clearTimeout(t.endTimeout); if(t.holder&&t.holder.parentNode) t.holder.parentNode.remove(); }); incenseTimers=[]; incenseLayer.innerHTML=''; }
+  function lightIncense(seconds){
+    const koro=(selected&&selected.dataset.id==='koro')?selected:canvas.querySelector('.item[data-id="koro"]');
+    const holder=document.createElement('div'); holder.className='incense';
+    const stageRect=stage2.getBoundingClientRect();
+    if(koro){ const r=koro.getBoundingClientRect(); const cx=r.left+r.width/2-stageRect.left; const top=r.top-stageRect.top+r.height*0.05; holder.style.left=cx+'px'; holder.style.top=top+'px'; } else { holder.style.left='50%'; holder.style.bottom='28px'; holder.style.transform='translateX(-50%)'; }
+    incenseLayer.appendChild(holder);
+    const tag=document.createElement('div'); tag.className='timerTag'; tag.textContent=seconds+'秒'; holder.appendChild(tag);
+    const smokeInterval=setInterval(()=>{ const s=document.createElement('div'); s.className='smoke'; const drift=(Math.random()*36-18); s.style.transform='translate('+drift+'px,0)'; holder.appendChild(s); setTimeout(()=>s.remove(),2500); },550);
+    let remain=seconds; const tick=setInterval(()=>{ remain-=1; if(remain>=0) tag.textContent=remain+'秒'; },1000);
+    const endTimeout=setTimeout(()=>{ clearInterval(smokeInterval); clearInterval(tick); holder.style.transition='opacity .6s'; holder.style.opacity='0'; setTimeout(()=>holder.remove(),650); }, seconds*1000);
+    incenseTimers.push({holder, smokeInterval, tick, endTimeout});
+  }
+  document.getElementById('btnIncense15').onclick=()=>lightIncense(15);
+  document.getElementById('btnIncense30').onclick=()=>lightIncense(30);
+  document.getElementById('btnIncense60').onclick=()=>lightIncense(60);
+  let audioCtx=null; function getCtx(){ if(!audioCtx||audioCtx.state==='closed'){ audioCtx=new (window.AudioContext||window.webkitAudioContext)(); } return audioCtx; }
+  document.getElementById('btnRing').onclick=async()=>{ const ctx=getCtx(); if(ctx.state==='suspended'){ try{ await ctx.resume(); }catch(e){} } ringBell(ctx); };
+  function ringBell(ctx){ const now=ctx.currentTime, freqs=[740,1480,2220,2960], gains=[.8,.35,.18,.12]; freqs.forEach((f,i)=>{ const osc=ctx.createOscillator(), gain=ctx.createGain(); osc.type='sine'; osc.frequency.value=f; gain.gain.setValueAtTime(.0001,now); gain.gain.exponentialRampToValueAtTime(gains[i],now+.01); gain.gain.exponentialRampToValueAtTime(.0001,now+2.2+i*.1); osc.connect(gain).connect(ctx.destination); osc.frequency.exponentialRampToValueAtTime(f*.998,now+.2); osc.frequency.exponentialRampToValueAtTime(f*1.002,now+.6); osc.start(now); osc.stop(now+2.6+i*.1); }); }
+
+  // Profile
+  const dod=document.getElementById('dod'), rel=document.getElementById('rel'), memo=document.getElementById('memo'), kaimyoP=document.getElementById('kaimyoP');
+  function loadProfile(){ const data=JSON.parse(localStorage.getItem(k('facts'))||'{}'); dod.value=data.dod||''; rel.value=data.rel||''; memo.value=data.memo||''; kaimyoP.value=data.kaimyoP||''; }
+  function saveProfile(){ const data={dod:dod.value, rel:rel.value, memo:memo.value, kaimyoP:kaimyoP.value}; localStorage.setItem(k('facts'), JSON.stringify(data)); }
+  document.getElementById('btnSaveProfile').onclick=saveProfile; document.getElementById('btnClearProfile').onclick=()=>{ dod.value=''; rel.value=''; memo.value=''; kaimyoP.value=''; localStorage.removeItem(k('facts')); };
+
+  // Portrait placement on altar
+  document.getElementById('btnPlacePortrait').onclick=()=>{ const url=localStorage.getItem(k('portrait_url'))||''; if(!url) return; const fr=localStorage.getItem(k('portrait_frame'))||'wood'; const el=addItem({id:'portrait', name:'遺影', img:url}); if(el){ el.classList.add(fr==='black'?'framed-black':(fr==='silver'?'framed-silver':'framed-wood')); saveCanvas(); } };
+  function placePortraitOnAltar(url, frame){ const el=addItem({id:'portrait', name:'遺影', img:url}); if(el){ el.classList.add(frame==='black'?'framed-black':(frame==='silver'?'framed-silver':'framed-wood')); saveCanvas(); } }
+
+  // Ihai edit
+  document.getElementById('btnIhai').onclick=()=>{
+    let target = (selected && selected.dataset.kind==='ihai') ? selected : canvas.querySelector('.item[data-kind="ihai"]');
+    if(!target){ alert('位牌が見つかりません。カタログ→本尊・掛け軸・位牌 から位牌を追加してください。'); return; }
+    const kEl = target.querySelector('.kaimyo'); const size = parseInt(window.getComputedStyle(kEl).fontSize,10) || 22;
+    document.getElementById('kaimyoInput').value = kEl.textContent||''; document.getElementById('kaimyoSize').value = Math.max(16, Math.min(36, size)); document.getElementById('sheetIhai').style.display='flex';
+  };
+  document.getElementById('btnIhaiApply').onclick=()=>{
+    const target = (selected && selected.dataset.kind==='ihai') ? selected : canvas.querySelector('.item[data-kind="ihai"]');
+    if(!target){ alert('位牌が選択されていません'); return; }
+    const kEl = target.querySelector('.kaimyo'); kEl.textContent = (document.getElementById('kaimyoInput').value||'').trim(); kEl.style.fontSize = ((document.getElementById('kaimyoSize').value)||22) + 'px'; document.getElementById('sheetIhai').style.display='none'; saveCanvas();
+  };
+  document.getElementById('btnIhaiClear').onclick=()=>{ const target=(selected&&selected.dataset.kind==='ihai')?selected:canvas.querySelector('.item[data-kind="ihai"]'); if(!target){ alert('位牌が選択されていません'); return; } target.querySelector('.kaimyo').textContent=''; saveCanvas(); };
+  ;[document.getElementById('btnIhaiClose'), document.getElementById('btnIhaiCloseTop')].forEach(b=> b.onclick=()=> document.getElementById('sheetIhai').style.display='none');
+
+  // Canvas save/load
+  function saveCanvas(){
+    const items=[...canvas.querySelectorAll('.item')].map(el=>{
+      const img=el.querySelector('img'); const ov=el.querySelector('.ihaiOverlay .kaimyo');
+      return { id:el.dataset.id||'', kind:el.dataset.kind||'', url:img?.src||'', name:el.querySelector('.label')?.textContent||'', left:el.style.left||'50%', top:el.style.top||'50%', transform:el.style.transform||'translate(-50%,-50%)', z:parseInt(el.style.zIndex||'1',10), w:img?.style.width||'', h:img?.style.height||'', kaimyo:ov?ov.textContent:'', kaimyoSize:ov?(ov.style.fontSize||'22px'):'' };
+    });
+    const state={items, bg:altarBg.src, buy:btnBuy.href, buyEnabled:!btnBuy.hasAttribute('aria-disabled')};
+    localStorage.setItem(k('canvas'), JSON.stringify(state));
+  }
+  function loadCanvas(){
+    stopIncenseAll(); canvas.innerHTML='';
+    let state=null; try{ state=JSON.parse(localStorage.getItem(k('canvas'))||'null'); }catch(e){ state=null; }
+    if(!state){ hint.style.display='block'; altarBg.src='https://picsum.photos/seed/altarA/1600/1000'; btnBuy.href='#'; btnBuy.setAttribute('aria-disabled','true'); return; }
+    hint.style.display = (state.items && state.items.length) ? 'none' : 'block';
+    altarBg.src = state.bg || 'https://picsum.photos/seed/altarA/1600/1000';
+    const enabled = !!state.buyEnabled && state.buy && state.buy!=='#'; btnBuy.href = state.buy || '#'; if(enabled){ btnBuy.removeAttribute('aria-disabled'); } else { btnBuy.setAttribute('aria-disabled','true'); }
+    zCounter=10;
+    (state.items||[]).forEach(d=>{ const el=document.createElement('div'); el.className='item'; el.dataset.id=d.id||''; el.dataset.kind=d.kind||''; el.dataset.url=''; el.style.left=d.left||'50%'; el.style.top=d.top||'50%'; el.style.transform=d.transform||'translate(-50%,-50%)'; el.style.zIndex=String(d.z||1); el.innerHTML = `<img src="${d.url}" alt="${d.name||''}"><div class="label">${d.name||''}</div><div class="handle">↘</div>`; if(d.kind==='ihai'){ const ov=document.createElement('div'); ov.className='ihaiOverlay'; ov.innerHTML='<div class="kaimyo"></div>'; el.appendChild(ov); const km=ov.querySelector('.kaimyo'); km.textContent = d.kaimyo||''; if(d.kaimyoSize) km.style.fontSize = d.kaimyoSize; } const img=el.querySelector('img'); if(img){ if(d.w) img.style.width=d.w; if(d.h) img.style.height=d.h; } canvas.appendChild(el); makeInteractive(el); zCounter = Math.max(zCounter, d.z||1); }); setSelected(null);
+  }
+
+  // switch profile
+  function switchProfile(id, isNew){ currentId=id; localStorage.setItem(kCurrent(),currentId);
+    const fr = localStorage.getItem(k('portrait_frame')) || 'wood'; selectedFrame=fr; document.querySelectorAll('.frame-tabs .chip').forEach(ch=> ch.classList.toggle('active', ch.dataset.frame===fr)); frameEl.classList.remove('black','silver','wood'); frameEl.classList.add(fr);
+    const statusVal = localStorage.getItem(k('portrait_status')) || 'none'; const url = localStorage.getItem(k('portrait_url')) || ''; overlay.style.display='none'; btnApprove.disabled=true; btnReject.disabled=true; pending=false;
+    if(statusVal==='approved' && url){ applyPortrait(url); status.innerHTML='<span class="badge">承認済み</span> / 遺影を表示しています'; } else if(statusVal==='pending'){ applyPortrait(''); status.innerHTML='<span class="badge">審査中</span> / 承認待ち'; overlay.style.display='flex'; btnApprove.disabled=false; btnReject.disabled=false; } else { applyPortrait(''); status.innerHTML='<span class="badge">未申請</span> / アップロードして承認を待ちます'; }
+    document.getElementById('btnPlacePortrait').disabled = !url; loadProfile(); sel.value=currentId; loadCanvas(); loadVoice(); debugInfo();
+  }
+
+  // Voice (#3-#5)
+  const voiceConsent = document.getElementById('voiceConsent'), voiceFile=document.getElementById('voiceFile'), modelState=document.getElementById('modelState'), btnModelCreate=document.getElementById('btnModelCreate'), btnModelReset=document.getElementById('btnModelReset'), sayThanks=document.getElementById('sayThanks'), sayVisit=document.getElementById('sayVisit'), voiceAudio=document.getElementById('voiceAudio');
+  const customSay=document.getElementById('customSay'), btnAddSay=document.getElementById('btnAddSay'), sayList=document.getElementById('sayList'), autoGreet=document.getElementById('autoGreet'), greetText=document.getElementById('greetText'), btnTestGreet=document.getElementById('btnTestGreet'), favFirst=document.getElementById('favFirst');
+  function kVoiceUrl(){ return k('voice_url'); } function kVoiceConsent(){ return k('voice_consent'); } function kVoiceModel(){ return k('voice_model'); } function kSayList(){ return k('say_list'); } function kAutoGreet(){ return k('auto_greet'); } function kGreetText(){ return k('greet_text'); } function kSayFavFirst(){ return k('say_fav_first'); }
+  function loadVoice(){ voiceConsent.checked = (localStorage.getItem(kVoiceConsent())==='1'); const url=localStorage.getItem(kVoiceUrl())||''; if(url){ voiceAudio.src=url; voiceAudio.style.display='block'; } else { voiceAudio.removeAttribute('src'); voiceAudio.style.display='none'; } setModelState(localStorage.getItem(kVoiceModel())||'none'); loadSay(); favFirst.checked=(localStorage.getItem(kSayFavFirst())==='1'); }
+  function setModelState(state){ const map={none:'未作成',training:'作成中',ready:'作成済み'}; modelState.textContent=map[state]||'未作成'; modelState.style.background = state==='ready' ? '#e8f7ec' : '#f8f8f8'; modelState.style.borderColor = state==='ready' ? '#bfe3c9' : '#ddd'; modelState.style.color = state==='ready' ? '#205b2f' : '#444'; localStorage.setItem(kVoiceModel(), state); }
+  voiceConsent.onchange=()=> localStorage.setItem(kVoiceConsent(), voiceConsent.checked?'1':'0');
+  voiceFile.onchange=(e)=>{ const f=e.target.files&&e.target.files[0]; if(!f){ localStorage.removeItem(kVoiceUrl()); loadVoice(); return; } const url=URL.createObjectURL(f); localStorage.setItem(kVoiceUrl(), url); loadVoice(); };
+  btnModelCreate.onclick=()=>{ setModelState('training'); setTimeout(()=> setModelState('ready'), 1200); };
+  btnModelReset.onclick=()=>{ [kVoiceUrl(),kVoiceModel(),kVoiceConsent(),kSayList(),kAutoGreet(),kGreetText(),kSayFavFirst()].forEach(kv=> localStorage.removeItem(kv)); loadVoice(); };
+  function getSay(){ try{ const raw=JSON.parse(localStorage.getItem(kSayList())||'[]'); let arr=Array.isArray(raw)?raw:[]; arr=arr.map(x=>(typeof x==='string')?{t:x,fav:false}:(x&&typeof x==='object'?{t:(x.t||''),fav:!!x.fav}:{t:String(x||''),fav:false})); return arr; }catch(e){ return []; } }
+  function saveSay(arr){ localStorage.setItem(kSayList(), JSON.stringify(arr||[])); }
+  function renderSay(arr){ sayList.innerHTML=''; const favOn=(localStorage.getItem(kSayFavFirst())==='1'); const view=favOn?[...arr].sort((a,b)=>(b.fav?1:0)-(a.fav?1:0)):arr; view.forEach((obj)=>{ const t=obj.t||''; const row=document.createElement('div'); row.style.display='flex'; row.style.gap='6px'; row.style.alignItems='center'; const star=document.createElement('button'); star.className='btn-ghost'; star.textContent=obj.fav?'★':'☆'; const span=document.createElement('div'); span.textContent=t; span.style.flex='1'; span.style.padding='6px 10px'; span.style.border='1px solid #eee'; span.style.borderRadius='10px'; span.style.background='#fff'; const play=document.createElement('button'); play.className='btn-ghost'; play.textContent='▶'; play.onclick=()=> speakText(t); const top=document.createElement('button'); top.className='btn-ghost'; top.textContent='⇧⇧'; const up=document.createElement('button'); up.className='btn-ghost'; up.textContent='↑'; const down=document.createElement('button'); down.className='btn-ghost'; down.textContent='↓'; const del=document.createElement('button'); del.className='btn-ghost'; del.textContent='✕'; star.onclick=()=>{ const a=getSay(); const idx=a.findIndex(x=>x===obj); if(idx>-1){ a[idx].fav=!a[idx].fav; saveSay(a); renderSay(a);} }; top.onclick=()=>{ const a=getSay(); const idx=a.findIndex(x=>x===obj); if(idx>0){ a.splice(idx,1); a.unshift(obj); saveSay(a); renderSay(a);} }; up.onclick=()=>{ const a=getSay(); const idx=a.findIndex(x=>x===obj); if(idx>0){ [a[idx-1],a[idx]]=[a[idx],a[idx-1]]; saveSay(a); renderSay(a);} }; down.onclick=()=>{ const a=getSay(); const idx=a.findIndex(x=>x===obj); if(idx>-1 && idx<a.length-1){ [a[idx+1],a[idx]]=[a[idx],a[idx+1]]; saveSay(a); renderSay(a);} }; del.onclick=()=>{ const a=getSay(); const idx=a.findIndex(x=>x===obj); if(idx>-1){ a.splice(idx,1); saveSay(a); renderSay(a);} }; row.append(star,span,play,top,up,down,del); sayList.appendChild(row); }); favFirst.checked=(localStorage.getItem(kSayFavFirst())==='1'); autoGreet.checked=(localStorage.getItem(kAutoGreet())==='1'); greetText.value=localStorage.getItem(kGreetText())||''; }
+  function loadSay(){ renderSay(getSay()); }
+  favFirst.onchange=()=>{ localStorage.setItem(kSayFavFirst(), favFirst.checked?'1':'0'); renderSay(getSay()); };
+  btnAddSay.onclick=()=>{ const t=(customSay.value||'').trim(); if(!t) return; const a=getSay(); a.push({t,fav:false}); saveSay(a); customSay.value=''; renderSay(a); };
+  autoGreet.onchange=()=> localStorage.setItem(kAutoGreet(), autoGreet.checked?'1':'0');
+  greetText.onchange=()=> localStorage.setItem(kGreetText(), greetText.value||'');
+  function speakText(text){ const consent=(localStorage.getItem(kVoiceConsent())==='1'); const state=localStorage.getItem(kVoiceModel())||'none'; if(!consent){ alert('権利・同意チェックを有効にしてください'); return; } if(state!=='ready'){ alert('モデルが未作成です（擬似）。「モデル作成（擬似）」を押してください。'); return; } const url=localStorage.getItem(kVoiceUrl())||''; if(url){ const a=document.getElementById('voiceAudio'); a.src=url; a.style.display='block'; a.play(); } else if('speechSynthesis' in window){ const u=new SpeechSynthesisUtterance(text); u.lang='ja-JP'; window.speechSynthesis.cancel(); window.speechSynthesis.speak(u); } else { alert('このブラウザではTTSが利用できません'); } }
+  document.getElementById('sayThanks').onclick=()=> speakText('ありがとう');
+  document.getElementById('sayVisit').onclick=()=> speakText('たまには墓参りにも来てね');
+  document.getElementById('btnTestGreet').onclick=()=> attemptAutoGreet(true);
+  function attemptAutoGreet(force=false){ if(!autoGreet.checked && !force) return; const consent=(localStorage.getItem(kVoiceConsent())==='1'), state=localStorage.getItem(kVoiceModel())||'none'; if(!consent||state!=='ready'){ if(force) alert('同意とモデル作成（擬似）を有効にしてください'); return; } const key='greet_once_'+currentId; if(!force&&sessionStorage.getItem(key)==='1') return; const txt=localStorage.getItem(k('greet_text'))||localStorage.getItem('mpB_'+currentId+'_greet_text')||'今日も来てくれてありがとう'; speakText(txt); sessionStorage.setItem(key,'1'); }
+
+  // helpers
+  function clearAllUI(){ document.getElementById('overlay').style.display='none'; document.getElementById('status').innerHTML='<span class="badge">未申請</span> / アップロードして承認を待ちます'; portrait.innerHTML=''; portrait.appendChild(silhouette); stopIncenseAll(); canvas.innerHTML=''; document.getElementById('hint').style.display='block'; }
+  function clearProfileState(){ const prefix = NS + currentId + '_'; Object.keys(localStorage).forEach(key=>{ if(key.startsWith(prefix)) localStorage.removeItem(key); }); clearAllUI(); }
+
+  function start(){ show(localStorage.getItem(kPage())||'p1'); switchProfile(currentId||profiles[0].id,false); }
+  start();
+})();
+</script>
+</body>
+</html>
