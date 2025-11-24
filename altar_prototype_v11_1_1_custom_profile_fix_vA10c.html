@@ -1,0 +1,948 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>デジタル仏壇プロトタイプ vA10c</title>
+  <style>
+    :root {
+      color-scheme: dark;
+    }
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial,
+        "游ゴシック体", "YuGothic", "メイリオ", sans-serif;
+      background: radial-gradient(circle at top, #333 0, #000 55%);
+      color: #f5f5f5;
+      display: flex;
+      justify-content: center;
+    }
+    .wrapper {
+      max-width: 520px;
+      width: 100%;
+      min-height: 100vh;
+      padding: 14px;
+    }
+    .app-card {
+      background: rgba(15, 15, 15, 0.94);
+      border-radius: 18px;
+      padding: 14px 14px 16px;
+      box-shadow: 0 0 25px rgba(0, 0, 0, 0.75);
+      border: 1px solid #444;
+    }
+
+    .app-header {
+      margin-bottom: 10px;
+    }
+    .app-title-main {
+      font-size: 17px;
+      font-weight: 600;
+    }
+    .app-title-sub {
+      font-size: 11px;
+      color: #ccc;
+      margin-top: 2px;
+    }
+
+    .step-nav {
+      display: flex;
+      gap: 4px;
+      margin: 8px 0 10px;
+      overflow-x: auto;
+    }
+    .step-nav button {
+      flex: 1;
+      min-width: 0;
+      border-radius: 999px;
+      border: 1px solid #555;
+      padding: 6px 8px;
+      font-size: 11px;
+      background: #111;
+      color: #eee;
+      white-space: nowrap;
+    }
+    .step-nav button.active {
+      background: linear-gradient(135deg, #f5d27a, #b58b2a);
+      border-color: #f5d27a;
+      color: #16130a;
+      font-weight: 600;
+    }
+
+    .divider {
+      height: 1px;
+      margin: 8px 0 10px;
+      background: linear-gradient(to right, transparent, #777, transparent);
+    }
+
+    .section-title {
+      font-size: 13px;
+      letter-spacing: 0.08em;
+      color: #bbb;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+
+    .tab-panel {
+      display: none;
+    }
+    .tab-panel.active {
+      display: block;
+    }
+
+    /* 遺影タブ */
+    .portrait-area {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    .portrait-frame {
+      flex: 0 0 110px;
+      padding: 6px;
+      border-radius: 12px;
+      border: 3px solid #f5f5f5;
+      background: linear-gradient(135deg, #444, #111);
+    }
+    .portrait {
+      height: 128px;
+      border-radius: 8px;
+      background: #555;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      color: #eee;
+      text-align: center;
+      padding: 4px;
+    }
+    .portrait-status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      border-radius: 999px;
+      padding: 3px 9px;
+      font-size: 11px;
+      margin-bottom: 4px;
+    }
+    .portrait-status-pill span {
+      font-weight: 600;
+    }
+    .portrait-status-pill.status-unsubmitted {
+      background: rgba(120, 120, 120, 0.15);
+      border: 1px solid #666;
+      color: #ddd;
+    }
+    .portrait-status-pill.status-review {
+      background: rgba(255, 196, 87, 0.12);
+      border: 1px solid #f5d27a;
+      color: #f5d27a;
+    }
+    .portrait-status-pill.status-approved {
+      background: rgba(126, 217, 109, 0.15);
+      border: 1px solid #7ed96d;
+      color: #caffb8;
+    }
+    .portrait-text {
+      font-size: 12px;
+      color: #e0e0e0;
+      line-height: 1.5;
+    }
+    .portrait-buttons {
+      margin-top: 6px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .btn {
+      border-radius: 999px;
+      padding: 6px 12px;
+      font-size: 11px;
+      border: 1px solid #666;
+      background: #171717;
+      color: #f8f8f8;
+    }
+    .btn-primary {
+      border-color: #f5d27a;
+      background: linear-gradient(135deg, #f5d27a, #b58b2a);
+      color: #16130a;
+      font-weight: 600;
+    }
+    .btn-ghost {
+      background: transparent;
+    }
+    .btn:active {
+      opacity: 0.85;
+    }
+    .note {
+      font-size: 10px;
+      color: #999;
+      margin-top: 6px;
+      line-height: 1.5;
+    }
+
+    /* 仏壇タブ */
+    .altar-layout {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .altar-preview {
+      border-radius: 14px;
+      padding: 10px;
+      border: 1px solid #555;
+      background: radial-gradient(circle at top, #3a2a18 0, #120e0a 55%);
+      min-height: 150px;
+      position: relative;
+      overflow: hidden;
+    }
+    .altar-preview.alt-basic {
+      background: radial-gradient(circle at top, #3a2a18 0, #120e0a 55%);
+    }
+    .altar-preview.alt-gold {
+      background: radial-gradient(circle at top, #614000 0, #1b1205 55%);
+    }
+    .altar-preview.alt-modern {
+      background: radial-gradient(circle at top, #3c4148 0, #0b0d10 55%);
+    }
+    .altar-shelf {
+      position: absolute;
+      left: 6%;
+      right: 6%;
+      bottom: 18%;
+      height: 32%;
+      border-radius: 10px 10px 4px 4px;
+      background: linear-gradient(to bottom, rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.7));
+      border-top: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    .altar-base {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 9%;
+      height: 16%;
+      background: linear-gradient(to bottom, rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.9));
+    }
+    .altar-portrait-small {
+      position: absolute;
+      top: 16%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 80px;
+      height: 95px;
+      border-radius: 9px;
+      background: rgba(120, 120, 120, 0.6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      text-align: center;
+      padding: 3px;
+      border: 2px solid rgba(245, 245, 245, 0.7);
+    }
+    .altar-portrait-small.approved {
+      background: rgba(230, 230, 230, 0.95);
+      color: #222;
+    }
+    .altar-label {
+      position: absolute;
+      top: 6%;
+      left: 10px;
+      font-size: 11px;
+      color: #f5e3c0;
+      text-shadow: 0 0 4px rgba(0, 0, 0, 0.6);
+    }
+    .altar-status {
+      position: absolute;
+      top: 6%;
+      right: 10px;
+      font-size: 11px;
+      color: #eee;
+      background: rgba(0, 0, 0, 0.45);
+      padding: 2px 7px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+    }
+    .altar-items-row {
+      position: absolute;
+      bottom: 22%;
+      left: 8%;
+      right: 8%;
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      font-size: 11px;
+    }
+    .altar-item-pill {
+      padding: 2px 7px;
+      border-radius: 999px;
+      background: rgba(0, 0, 0, 0.5);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+    }
+
+    .altar-controls {
+      border-radius: 12px;
+      border: 1px solid #333;
+      background: #151515;
+      padding: 8px;
+      font-size: 12px;
+    }
+    .form-row {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 6px;
+      flex-wrap: wrap;
+    }
+    .form-row label {
+      font-size: 11px;
+      color: #ccc;
+    }
+    select,
+    input[type="text"],
+    input[type="date"],
+    textarea {
+      border-radius: 999px;
+      border: 1px solid #555;
+      background: #101010;
+      color: #f5f5f5;
+      font-size: 12px;
+      padding: 6px 9px;
+      flex: 1;
+      min-width: 0;
+    }
+    textarea {
+      border-radius: 10px;
+      resize: vertical;
+      min-height: 48px;
+    }
+    .catalog-list {
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      margin-top: 4px;
+      padding-bottom: 2px;
+    }
+    .catalog-card {
+      flex: 0 0 150px;
+      border-radius: 10px;
+      border: 1px solid #444;
+      padding: 6px;
+      background: #1b1b1b;
+      font-size: 11px;
+    }
+    .catalog-name {
+      font-weight: 600;
+      margin-bottom: 2px;
+    }
+    .catalog-meta {
+      font-size: 10px;
+      color: #b5b5b5;
+      margin-bottom: 4px;
+    }
+
+    /* プロフィールタブ */
+    .profile-summary {
+      margin-bottom: 8px;
+      padding: 8px;
+      border-radius: 12px;
+      border: 1px solid #333;
+      background: #171717;
+      font-size: 12px;
+      line-height: 1.6;
+    }
+    .profile-summary-title {
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 2px;
+    }
+    .profile-summary-sub {
+      font-size: 11px;
+      color: #bbb;
+    }
+    .profile-form-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-top: 4px;
+    }
+    .profile-form-grid label {
+      font-size: 11px;
+      color: #ccc;
+      display: block;
+      margin-bottom: 2px;
+    }
+    .profile-save-row {
+      margin-top: 6px;
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      align-items: center;
+    }
+    .save-status {
+      font-size: 10px;
+      color: #9fd69f;
+    }
+
+    /* 音声タブ */
+    .audio-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .audio-card {
+      border-radius: 10px;
+      border: 1px solid #333;
+      background: #171717;
+      padding: 8px;
+      font-size: 12px;
+    }
+    .audio-phrase {
+      font-weight: 600;
+      margin-bottom: 2px;
+    }
+    .audio-note {
+      font-size: 11px;
+      color: #aaa;
+      margin-top: 4px;
+    }
+
+    .app-header {
+      margin-bottom: 10px;
+    }
+    .app-title-main {
+      font-size: 17px;
+      font-weight: 600;
+    }
+    .app-title-sub {
+      font-size: 11px;
+      color: #ccc;
+      margin-top: 2px;
+    }
+
+    .footer {
+      margin-top: 10px;
+      font-size: 11px;
+      color: #888;
+      text-align: center;
+      line-height: 1.6;
+    }
+    .badge {
+      display: inline-block;
+      font-size: 10px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      border: 1px solid #666;
+      margin-top: 4px;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <div class="app-card">
+      <div class="app-header">
+        <div class="app-title-main">デジタル仏壇アプリ・プロトタイプ</div>
+        <div class="app-title-sub">
+          ①遺影 → ②仏壇 → ③プロフィール → ④音声イメージまでを一画面にまとめた設計版（HTMLデモ）
+        </div>
+      </div>
+
+      <div class="step-nav">
+        <button class="active" data-tab="portrait">① 遺影</button>
+        <button data-tab="altar">② 仏壇</button>
+        <button data-tab="profile">③ プロフィール</button>
+        <button data-tab="audio">④ 音声（将来案）</button>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- 遺影タブ -->
+      <section id="tab-portrait" class="tab-panel active">
+        <div class="section-title">Portrait</div>
+        <div class="portrait-area">
+          <div class="portrait-frame">
+            <div id="portraitDisplay" class="portrait">
+              遺影（サンプル）<br />タップで変更は<br />アプリ版で実装予定
+            </div>
+          </div>
+          <div style="flex:1;">
+            <div id="portraitStatusPill" class="portrait-status-pill status-unsubmitted">
+              <span>未申請</span>（サンプル）
+            </div>
+            <div class="portrait-text" id="portraitStatusText">
+              まだ遺影の申請は行われていません。<br />
+              実際のアプリでは、運営に遺影写真を提出 → スタッフが確認して承認します。
+            </div>
+            <div class="portrait-buttons">
+              <button id="btnRequestPortrait" class="btn-primary" type="button">
+                遺影を申請したことにする（デモ）
+              </button>
+              <button id="btnApprovePortrait" class="btn btn-ghost" type="button">
+                審査で「承認」になったことにする（デモ）
+              </button>
+            </div>
+            <div class="note">
+              ※この画面ではあくまで「申請 → 審査中 → 承認」の流れを<br />
+              タップで疑似的に体験できるだけです。<br />
+              実際の画像アップロード・審査はアプリ側で実装予定です。
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 仏壇タブ -->
+      <section id="tab-altar" class="tab-panel">
+        <div class="section-title">Altar</div>
+        <div class="altar-layout">
+          <div class="altar-preview alt-basic" id="altarPreview">
+            <div class="altar-label" id="altarLabel">シンプルな仏壇（サンプル）</div>
+            <div class="altar-status" id="altarPortraitStatus">遺影：未承認</div>
+            <div class="altar-portrait-small" id="altarPortraitSmall">
+              遺影確認中
+            </div>
+            <div class="altar-items-row" id="altarItemsRow">
+              <div class="altar-item-pill">🕯 お線香</div>
+              <div class="altar-item-pill">💐 お花</div>
+            </div>
+            <div class="altar-shelf"></div>
+            <div class="altar-base"></div>
+          </div>
+
+          <div class="altar-controls">
+            <div class="form-row">
+              <label for="altarStyleSelect">仏壇のタイプ</label>
+              <select id="altarStyleSelect">
+                <option value="basic">シンプル仏壇（標準）</option>
+                <option value="gold">金仏壇（荘厳）</option>
+                <option value="modern">モダン仏壇（リビング向け）</option>
+              </select>
+            </div>
+            <div class="form-row">
+              <label for="altarItemsInput">お供えするもの（カンマ区切り）</label>
+              <input
+                id="altarItemsInput"
+                type="text"
+                placeholder="例）お線香, お花, いちご大福"
+              />
+            </div>
+            <div class="form-row" style="justify-content:flex-end;">
+              <button id="btnApplyAltar" type="button" class="btn btn-primary">
+                仏壇に反映する
+              </button>
+            </div>
+            <div class="note">
+              ※実際のアプリでは、ここから「仏壇カタログ」や<br />
+              「位牌の文字入力」画面に遷移するイメージです。
+            </div>
+            <div style="margin-top:6px;">
+              <div style="font-size:11px;color:#bbb;margin-bottom:2px;">仏壇カタログ（サンプル）</div>
+              <div class="catalog-list">
+                <div class="catalog-card" data-style="basic">
+                  <div class="catalog-name">シンプル仏壇</div>
+                  <div class="catalog-meta">木目調・省スペース・一人暮らしにも</div>
+                  <button type="button" class="btn btn-ghost btn-catalog-choose">
+                    これを選ぶ
+                  </button>
+                </div>
+                <div class="catalog-card" data-style="gold">
+                  <div class="catalog-name">金仏壇</div>
+                  <div class="catalog-meta">伝統的・ご本尊と位牌を祀る本格タイプ</div>
+                  <button type="button" class="btn btn-ghost btn-catalog-choose">
+                    これを選ぶ
+                  </button>
+                </div>
+                <div class="catalog-card" data-style="modern">
+                  <div class="catalog-name">モダン仏壇</div>
+                  <div class="catalog-meta">リビングに馴染むデザイン・扉付き</div>
+                  <button type="button" class="btn btn-ghost btn-catalog-choose">
+                    これを選ぶ
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- プロフィールタブ -->
+      <section id="tab-profile" class="tab-panel">
+        <div class="section-title">Profile</div>
+        <div class="profile-summary" id="profileSummary">
+          <div class="profile-summary-title" id="summaryName">山田 太郎 さん</div>
+          <div class="profile-summary-sub" id="summaryRelation">
+            あなたのおじいちゃん（父方）
+          </div>
+          <div style="margin-top:4px;" id="summaryDetail">
+            没年月日：----年--月--日（未設定）<br />
+            戒名：未設定<br />
+            一言メモ：いつも見守ってくれてありがとう。無理しすぎず、元気で過ごすんだよ。
+          </div>
+        </div>
+
+        <div class="note">
+          入力した内容は、この端末のブラウザ内（localStorage）にのみ保存されます。<br />
+          サーバーや他の人の端末には共有されません。
+        </div>
+
+        <div class="profile-form-grid">
+          <div>
+            <label for="profileNameInput">お名前</label>
+            <input
+              id="profileNameInput"
+              type="text"
+              placeholder="例）山田 太郎 さん"
+            />
+          </div>
+          <div>
+            <label for="profileRelationInput">あなたとの関係</label>
+            <input
+              id="profileRelationInput"
+              type="text"
+              placeholder="例）あなたのおじいちゃん（父方）"
+            />
+          </div>
+          <div>
+            <label for="profileDeathDateInput">没年月日</label>
+            <input id="profileDeathDateInput" type="date" />
+          </div>
+          <div>
+            <label for="profileKaimyoInput">戒名（あれば）</label>
+            <input
+              id="profileKaimyoInput"
+              type="text"
+              placeholder="例）○○院△△居士"
+            />
+          </div>
+          <div>
+            <label for="profileMemoInput">思い出メモ・一言</label>
+            <textarea
+              id="profileMemoInput"
+              placeholder="例）一緒に釣りに行った夏のことは一生忘れません。"
+            ></textarea>
+          </div>
+        </div>
+
+        <div class="profile-save-row">
+          <span class="save-status" id="profileSaveStatus"></span>
+          <button id="btnResetProfile" type="button" class="btn btn-ghost">
+            入力をリセット
+          </button>
+          <button id="btnSaveProfile" type="button" class="btn btn-primary">
+            この端末に保存して反映
+          </button>
+        </div>
+      </section>
+
+      <!-- 音声タブ -->
+      <section id="tab-audio" class="tab-panel">
+        <div class="section-title">Audio (Plan)</div>
+        <div class="audio-grid">
+          <div class="audio-card">
+            <div class="audio-phrase">「いつもありがとう。」</div>
+            <div class="audio-note">
+              将来のアプリ版では、ここに故人の声を再現した音声ボタンが並びます。<br />
+              事前にご家族がアップロードした音声をもとに「ありがとう」「元気にしているかい？」など、
+              シーンに合わせたひと言を再生できるイメージです。
+            </div>
+          </div>
+          <div class="audio-card">
+            <div class="audio-phrase">「たまにはお墓参りにも来てね。」</div>
+            <div class="audio-note">
+              声の再現は、同意を得た方のみ・安全に配慮した範囲で実装予定です。<br />
+              このHTMLデモでは実際の音声再生は行わず、「将来の設計案」としての表示のみです。
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="divider"></div>
+
+      <div class="footer">
+        デジタル仏壇アプリ プロトタイプ v11.1.1 / vA10c（HTMLデモ）<br />
+        ・①遺影ステータス → ②仏壇プレビュー連動<br />
+        ・③プロフィールは localStorage に保存（この端末のみ）<br />
+        <span class="badge">テスト用 / 実サービスとは異なります</span>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ユーティリティ：localStorage ラッパー
+    const storageKeyProfile = "digital_altar_profile_vA10c";
+    const storageKeyPortraitStatus = "digital_altar_portrait_status_vA10c";
+    const storageKeyAltar = "digital_altar_altar_vA10c";
+
+    function safeLoad(key, fallback = null) {
+      try {
+        const raw = localStorage.getItem(key);
+        if (!raw) return fallback;
+        return JSON.parse(raw);
+      } catch (e) {
+        return fallback;
+      }
+    }
+
+    function safeSave(key, value) {
+      try {
+        localStorage.setItem(key, JSON.stringify(value));
+      } catch (e) {
+        // ignore
+      }
+    }
+
+    // タブ切り替え
+    const tabButtons = document.querySelectorAll(".step-nav button");
+    const tabPanels = {
+      portrait: document.getElementById("tab-portrait"),
+      altar: document.getElementById("tab-altar"),
+      profile: document.getElementById("tab-profile"),
+      audio: document.getElementById("tab-audio"),
+    };
+
+    tabButtons.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const tab = btn.getAttribute("data-tab");
+        tabButtons.forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+        Object.keys(tabPanels).forEach((key) => {
+          tabPanels[key].classList.toggle("active", key === tab);
+        });
+      });
+    });
+
+    // 遺影ステータス管理
+    const portraitStatusPill = document.getElementById("portraitStatusPill");
+    const portraitStatusText = document.getElementById("portraitStatusText");
+    const btnRequestPortrait = document.getElementById("btnRequestPortrait");
+    const btnApprovePortrait = document.getElementById("btnApprovePortrait");
+    const altarPortraitStatusEl = document.getElementById("altarPortraitStatus");
+    const altarPortraitSmallEl = document.getElementById("altarPortraitSmall");
+
+    const PORTRAIT_STATUS = {
+      UNSUBMITTED: "unsubmitted",
+      REVIEW: "review",
+      APPROVED: "approved",
+    };
+
+    function updatePortraitUI(status) {
+      portraitStatusPill.classList.remove(
+        "status-unsubmitted",
+        "status-review",
+        "status-approved"
+      );
+      let label = "";
+      let text = "";
+      if (status === PORTRAIT_STATUS.REVIEW) {
+        portraitStatusPill.classList.add("status-review");
+        label = "審査中";
+        text =
+          "運営に遺影の申請が送信され、スタッフが確認している状態です。\n実際のアプリでは、審査が完了すると自動で「承認」に切り替わります。";
+        altarPortraitStatusEl.textContent = "遺影：審査中";
+        altarPortraitSmallEl.textContent = "審査中";
+        altarPortraitSmallEl.classList.remove("approved");
+      } else if (status === PORTRAIT_STATUS.APPROVED) {
+        portraitStatusPill.classList.add("status-approved");
+        label = "承認済";
+        text =
+          "遺影の審査が完了し、承認された状態です。\n仏壇タブの遺影にも反映され、表示が明るくなります。";
+        altarPortraitStatusEl.textContent = "遺影：承認済";
+        altarPortraitSmallEl.textContent = "山田 太郎 さん";
+        altarPortraitSmallEl.classList.add("approved");
+      } else {
+        portraitStatusPill.classList.add("status-unsubmitted");
+        label = "未申請";
+        text =
+          "まだ遺影の申請は行われていません。\n実際のアプリでは、ここから写真を送信して審査を依頼します。";
+        altarPortraitStatusEl.textContent = "遺影：未承認";
+        altarPortraitSmallEl.textContent = "遺影確認中";
+        altarPortraitSmallEl.classList.remove("approved");
+      }
+      portraitStatusPill.querySelector("span").textContent = label;
+      portraitStatusText.innerHTML = text.replace(/\n/g, "<br />");
+      safeSave(storageKeyPortraitStatus, { status });
+    }
+
+    btnRequestPortrait.addEventListener("click", () => {
+      updatePortraitUI(PORTRAIT_STATUS.REVIEW);
+    });
+
+    btnApprovePortrait.addEventListener("click", () => {
+      updatePortraitUI(PORTRAIT_STATUS.APPROVED);
+    });
+
+    // 仏壇プレビュー
+    const altarPreviewEl = document.getElementById("altarPreview");
+    const altarLabelEl = document.getElementById("altarLabel");
+    const altarItemsInputEl = document.getElementById("altarItemsInput");
+    const altarItemsRowEl = document.getElementById("altarItemsRow");
+    const altarStyleSelectEl = document.getElementById("altarStyleSelect");
+    const btnApplyAltar = document.getElementById("btnApplyAltar");
+
+    function applyAltarStyle(style) {
+      altarPreviewEl.classList.remove("alt-basic", "alt-gold", "alt-modern");
+      let label = "";
+      if (style === "gold") {
+        altarPreviewEl.classList.add("alt-gold");
+        label = "金仏壇（サンプル）";
+      } else if (style === "modern") {
+        altarPreviewEl.classList.add("alt-modern");
+        label = "モダン仏壇（サンプル）";
+      } else {
+        altarPreviewEl.classList.add("alt-basic");
+        label = "シンプルな仏壇（サンプル）";
+      }
+      altarLabelEl.textContent = label;
+    }
+
+    function applyAltarItems(text) {
+      altarItemsRowEl.innerHTML = "";
+      const base = text || "お線香, お花";
+      const parts = base
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean);
+      parts.forEach((p) => {
+        const pill = document.createElement("div");
+        pill.className = "altar-item-pill";
+        pill.textContent = p;
+        altarItemsRowEl.appendChild(pill);
+      });
+    }
+
+    btnApplyAltar.addEventListener("click", () => {
+      const style = altarStyleSelectEl.value;
+      const items = altarItemsInputEl.value;
+      applyAltarStyle(style);
+      applyAltarItems(items);
+      safeSave(storageKeyAltar, { style, items });
+    });
+
+    // カタログから選択
+    document.querySelectorAll(".btn-catalog-choose").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const card = btn.closest(".catalog-card");
+        if (!card) return;
+        const style = card.getAttribute("data-style") || "basic";
+        altarStyleSelectEl.value = style;
+        applyAltarStyle(style);
+        safeSave(storageKeyAltar, {
+          style,
+          items: altarItemsInputEl.value,
+        });
+      });
+    });
+
+    // プロフィール
+    const profileSummaryName = document.getElementById("summaryName");
+    const profileSummaryRelation = document.getElementById("summaryRelation");
+    const profileSummaryDetail = document.getElementById("summaryDetail");
+
+    const profileNameInput = document.getElementById("profileNameInput");
+    const profileRelationInput = document.getElementById("profileRelationInput");
+    const profileDeathDateInput = document.getElementById("profileDeathDateInput");
+    const profileKaimyoInput = document.getElementById("profileKaimyoInput");
+    const profileMemoInput = document.getElementById("profileMemoInput");
+
+    const btnSaveProfile = document.getElementById("btnSaveProfile");
+    const btnResetProfile = document.getElementById("btnResetProfile");
+    const profileSaveStatus = document.getElementById("profileSaveStatus");
+
+    function formatDateJP(dateStr) {
+      if (!dateStr) return "----年--月--日（未設定）";
+      const d = new Date(dateStr);
+      if (Number.isNaN(d.getTime())) return "----年--月--日（未設定）";
+      const y = d.getFullYear();
+      const m = d.getMonth() + 1;
+      const day = d.getDate();
+      return `${y}年${m}月${day}日ごろ`;
+    }
+
+    function applyProfileToSummary(p) {
+      const name = p.name || "山田 太郎 さん";
+      const relation = p.relation || "あなたのおじいちゃん（父方）";
+      const deathText = formatDateJP(p.deathDate);
+      const kaimyo = p.kaimyo || "未設定";
+      const memo =
+        p.memo ||
+        "いつも見守ってくれてありがとう。無理しすぎず、元気で過ごすんだよ。";
+      profileSummaryName.textContent = name;
+      profileSummaryRelation.textContent = relation;
+      profileSummaryDetail.innerHTML = `没年月日：${deathText}<br />戒名：${kaimyo}<br />一言メモ：${memo}`;
+      // 遺影欄にも名前を反映（承認済みのとき）
+      if (safeLoad(storageKeyPortraitStatus)?.status === PORTRAIT_STATUS.APPROVED) {
+        altarPortraitSmallEl.textContent = name;
+      }
+    }
+
+    function loadProfile() {
+      const saved = safeLoad(storageKeyProfile, null);
+      if (saved) {
+        profileNameInput.value = saved.name || "";
+        profileRelationInput.value = saved.relation || "";
+        profileDeathDateInput.value = saved.deathDate || "";
+        profileKaimyoInput.value = saved.kaimyo || "";
+        profileMemoInput.value = saved.memo || "";
+        applyProfileToSummary(saved);
+      }
+    }
+
+    btnSaveProfile.addEventListener("click", () => {
+      const profile = {
+        name: profileNameInput.value.trim(),
+        relation: profileRelationInput.value.trim(),
+        deathDate: profileDeathDateInput.value,
+        kaimyo: profileKaimyoInput.value.trim(),
+        memo: profileMemoInput.value.trim(),
+      };
+      safeSave(storageKeyProfile, profile);
+      applyProfileToSummary(profile);
+      profileSaveStatus.textContent = "この端末に保存しました";
+      setTimeout(() => {
+        profileSaveStatus.textContent = "";
+      }, 2500);
+    });
+
+    btnResetProfile.addEventListener("click", () => {
+      profileNameInput.value = "";
+      profileRelationInput.value = "";
+      profileDeathDateInput.value = "";
+      profileKaimyoInput.value = "";
+      profileMemoInput.value = "";
+      safeSave(storageKeyProfile, {});
+      applyProfileToSummary({});
+      profileSaveStatus.textContent = "入力をリセットしました";
+      setTimeout(() => {
+        profileSaveStatus.textContent = "";
+      }, 2500);
+    });
+
+    // 初期ロード
+    (function init() {
+      // 遺影ステータス
+      const savedPortrait = safeLoad(storageKeyPortraitStatus, null);
+      if (savedPortrait && savedPortrait.status) {
+        updatePortraitUI(savedPortrait.status);
+      } else {
+        updatePortraitUI(PORTRAIT_STATUS.UNSUBMITTED);
+      }
+      // 仏壇
+      const savedAltar = safeLoad(storageKeyAltar, null);
+      if (savedAltar) {
+        if (savedAltar.style) {
+          altarStyleSelectEl.value = savedAltar.style;
+          applyAltarStyle(savedAltar.style);
+        }
+        if (savedAltar.items) {
+          altarItemsInputEl.value = savedAltar.items;
+          applyAltarItems(savedAltar.items);
+        }
+      } else {
+        applyAltarStyle("basic");
+        applyAltarItems("");
+      }
+      // プロフィール
+      loadProfile();
+    })();
+  </script>
+</body>
+</html>
