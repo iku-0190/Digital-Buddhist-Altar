@@ -1,0 +1,1818 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>デジタル仏壇プロトタイプ vA10beta</title>
+  <style>
+    :root { color-scheme: dark; }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,"游ゴシック体","YuGothic","メイリオ",sans-serif;
+      background: radial-gradient(circle at top,#333 0,#000 55%);
+      color: #f5f5f5;
+      display: flex;
+      justify-content: center;
+    }
+    .wrapper { max-width: 520px; width: 100%; min-height: 100vh; padding: 14px; }
+    .app-card {
+      background: rgba(15,15,15,.94);
+      border-radius: 18px;
+      padding: 14px 14px 16px;
+      box-shadow: 0 0 25px rgba(0,0,0,.75);
+      border: 1px solid #444;
+    }
+    .app-header { margin-bottom: 8px; }
+    .app-title-main { font-size: 17px; font-weight: 600; }
+    .app-title-sub { font-size: 11px; color: #ccc; margin-top: 2px; }
+
+    .profile-switcher {
+      margin-top: 8px;
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .profile-switcher-label { font-size: 11px; color: #bbb; margin-right: 2px; }
+    #profileChipContainer { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+    .profile-chip {
+      border-radius: 999px;
+      border: 1px solid #555;
+      padding: 4px 10px;
+      font-size: 11px;
+      background: #111;
+      color: #eee;
+    }
+    .profile-chip.active {
+      background: linear-gradient(135deg,#9fd3ff,#3b81ff);
+      border-color: #9fd3ff;
+      color: #041424;
+      font-weight: 600;
+    }
+    .profile-chip.add { border-style: dashed; opacity: .9; }
+    .profile-count-label {
+      font-size: 10px;
+      color: #aaa;
+    }
+    .profile-delete-btn {
+      margin-left: auto;
+      padding-inline: 10px;
+    }
+
+    .reengage-banner {
+      display: none;
+      margin-top: 8px;
+      padding: 8px;
+      border-radius: 10px;
+      border: 1px solid #66552a;
+      background: #241c10;
+      font-size: 11px;
+      color: #f5e3c0;
+    }
+    .reengage-title {
+      font-weight: 600;
+      margin-bottom: 2px;
+    }
+    .reengage-body {
+      margin-bottom: 4px;
+    }
+    .reengage-actions {
+      display: flex;
+      gap: 6px;
+      justify-content: flex-end;
+      align-items: center;
+      margin-bottom: 3px;
+    }
+    .reengage-note {
+      font-size: 10px;
+      color: #c9bfa0;
+    }
+
+    .step-nav {
+      display: flex;
+      gap: 4px;
+      margin: 10px 0 10px;
+      overflow-x: auto;
+    }
+    .step-nav button {
+      flex: 1; min-width: 0;
+      border-radius: 999px;
+      border: 1px solid #555;
+      padding: 6px 8px;
+      font-size: 11px;
+      background: #111;
+      color: #eee;
+      white-space: nowrap;
+    }
+    .step-nav button.active {
+      background: linear-gradient(135deg,#f5d27a,#b58b2a);
+      border-color: #f5d27a;
+      color: #16130a;
+      font-weight: 600;
+    }
+
+    .divider {
+      height: 1px;
+      margin: 8px 0 10px;
+      background: linear-gradient(to right,transparent,#777,transparent);
+    }
+    .section-title {
+      font-size: 13px;
+      letter-spacing: .08em;
+      color: #bbb;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    .portrait-area { display: flex; gap: 10px; align-items: center; }
+    .portrait-frame {
+      flex: 0 0 110px;
+      padding: 6px;
+      border-radius: 12px;
+      border: 3px solid #f5f5f5;
+      background: linear-gradient(135deg,#444,#111);
+    }
+    .portrait {
+      height: 128px;
+      border-radius: 8px;
+      background: #555;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      color: #eee;
+      text-align: center;
+      padding: 4px;
+    }
+    .portrait-status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      border-radius: 999px;
+      padding: 3px 9px;
+      font-size: 11px;
+      margin-bottom: 4px;
+    }
+    .portrait-status-pill span { font-weight: 600; }
+    .portrait-status-pill.status-unsubmitted {
+      background: rgba(120,120,120,.15);
+      border: 1px solid #666;
+      color: #ddd;
+    }
+    .portrait-status-pill.status-review {
+      background: rgba(255,196,87,.12);
+      border: 1px solid #f5d27a;
+      color: #f5d27a;
+    }
+    .portrait-status-pill.status-approved {
+      background: rgba(126,217,109,.15);
+      border: 1px solid #7ed96d;
+      color: #caffb8;
+    }
+    .portrait-text { font-size: 12px; color: #e0e0e0; line-height: 1.5; }
+    .portrait-buttons { margin-top: 6px; display: flex; flex-wrap: wrap; gap: 6px; }
+
+    .btn {
+      border-radius: 999px;
+      padding: 6px 12px;
+      font-size: 11px;
+      border: 1px solid #666;
+      background: #171717;
+      color: #f8f8f8;
+    }
+    .btn-primary {
+      border-color: #f5d27a;
+      background: linear-gradient(135deg,#f5d27a,#b58b2a);
+      color: #16130a;
+      font-weight: 600;
+    }
+    .btn-ghost { background: transparent; }
+    .btn-small { padding: 4px 9px; font-size: 11px; }
+    .btn:active { opacity: .85; }
+    .note { font-size: 10px; color: #999; margin-top: 6px; line-height: 1.5; }
+
+    
+    .ihai-preview-card {
+      margin-top: 8px;
+      padding: 6px 8px;
+      border-radius: 10px;
+      border: 1px solid #555;
+      background: #151515;
+      font-size: 11px;
+      line-height: 1.5;
+    }
+    .ihai-preview-title {
+      font-weight: 600;
+      margin-bottom: 2px;
+      font-size: 11px;
+    }
+    .ihai-preview-text {
+      font-size: 11px;
+      color: #f5e3c0;
+    }
+
+    .altar-layout { display: flex; flex-direction: column; gap: 10px; }
+    .altar-preview {
+      border-radius: 14px;
+      padding: 10px;
+      border: 1px solid #555;
+      background: radial-gradient(circle at top,#3a2a18 0,#120e0a 55%);
+      min-height: 150px;
+      position: relative;
+      overflow: hidden;
+    }
+    .altar-preview.alt-basic { background: radial-gradient(circle at top,#3a2a18 0,#120e0a 55%); }
+    .altar-preview.alt-gold { background: radial-gradient(circle at top,#614000 0,#1b1205 55%); }
+    .altar-preview.alt-modern { background: radial-gradient(circle at top,#3c4148 0,#0b0d10 55%); }
+
+    .altar-shelf {
+      position: absolute;
+      left: 6%; right: 6%; bottom: 18%; height: 32%;
+      border-radius: 10px 10px 4px 4px;
+      background: linear-gradient(to bottom,rgba(0,0,0,.2),rgba(0,0,0,.7));
+      border-top: 1px solid rgba(255,255,255,.2);
+    }
+    .altar-base {
+      position: absolute;
+      left: 0; right: 0; bottom: 9%; height: 16%;
+      background: linear-gradient(to bottom,rgba(0,0,0,.1),rgba(0,0,0,.9));
+    }
+    .altar-portrait-small {
+      position: absolute;
+      top: 16%; left: 50%;
+      transform: translateX(-50%);
+      width: 80px; height: 95px;
+      border-radius: 9px;
+      background: rgba(120,120,120,.6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      text-align: center;
+      padding: 3px;
+      border: 2px solid rgba(245,245,245,.7);
+    }
+    .altar-portrait-small.approved { background: rgba(230,230,230,.95); color: #222; }
+    .altar-label {
+      position: absolute;
+      top: 6%; left: 10px;
+      font-size: 11px;
+      color: #f5e3c0;
+      text-shadow: 0 0 4px rgba(0,0,0,.6);
+    }
+    .altar-status {
+      position: absolute;
+      top: 6%; right: 10px;
+      font-size: 11px;
+      color: #eee;
+      background: rgba(0,0,0,.45);
+      padding: 2px 7px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.15);
+    }
+    .altar-items-row {
+      position: absolute;
+      bottom: 22%; left: 8%; right: 8%;
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      font-size: 11px;
+    }
+
+    .altar-ihai {
+      position: absolute;
+      bottom: 24%;
+      left: 18%;
+      width: 60px;
+      padding: 4px 2px;
+      border-radius: 4px 4px 2px 2px;
+      background: linear-gradient(to bottom,#3b2a1a,#1c140d);
+      border: 1px solid rgba(255,255,255,.2);
+      font-size: 9px;
+      color: #f8f0dc;
+      text-align: center;
+      line-height: 1.4;
+      box-shadow: 0 0 4px rgba(0,0,0,.7);
+      z-index: 3;
+      display: none;
+      writing-mode: vertical-rl;
+      text-orientation: mixed;
+    }
+
+    .altar-draggable {
+      touch-action: none;
+      cursor: grab;
+    }
+
+    .altar-rin {
+      position: absolute;
+      bottom: 19%;
+      right: 20%;
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 30% 30%, #dddddd 0,#b0b0b0 40%,#555555 100%);
+      box-shadow: 0 0 4px rgba(0,0,0,.7);
+      z-index: 3;
+    }
+
+    .altar-rin-stick {
+      position: absolute;
+      bottom: 17%;
+      right: 10%;
+      width: 22px;
+      height: 7px;
+      border-radius: 3px;
+      background: linear-gradient(to right,#d9c28a,#a27c43);
+      box-shadow: 0 0 3px rgba(0,0,0,.6);
+      z-index: 3;
+    }
+    .altar-item-pill {
+      padding: 2px 7px;
+      border-radius: 999px;
+      background: rgba(0,0,0,.5);
+      border: 1px solid rgba(255,255,255,.18);
+    }
+
+    .incense-area {
+      position: absolute;
+      bottom: 20%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 40px;
+      height: 40px;
+      pointer-events: auto;
+      opacity: 0;
+      transition: opacity .3s ease;
+    }
+    .incense-area.active { opacity: 1; }
+    .incense-burner {
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 40px;
+      height: 12px;
+      border-radius: 8px;
+      background: radial-gradient(circle at top,#555 0,#222 60%);
+      box-shadow: 0 0 6px rgba(0,0,0,.7);
+      border: 1px solid rgba(255,255,255,.2);
+    }
+    .incense-stick {
+      position: absolute;
+      bottom: 10px;
+      left: 50%;
+      width: 3px;
+      height: 16px;
+      transform: translateX(-50%);
+      background: linear-gradient(to top,#4a2a1a,#d7c08a);
+      border-radius: 2px;
+    }
+    .incense-smoke {
+      position: absolute;
+      bottom: 26px;
+      left: 50%;
+      width: 6px;
+      height: 16px;
+      border-radius: 50%;
+      background: radial-gradient(circle,rgba(255,255,255,.9) 0,rgba(255,255,255,0) 70%);
+      opacity: 0;
+      transform: translateX(-50%);
+      animation: smokeRise 2.6s linear infinite;
+    }
+    .incense-smoke.smoke-2 { animation-delay: .9s; }
+    .incense-smoke.smoke-3 { animation-delay: 1.8s; }
+    @keyframes smokeRise {
+      0% { opacity: 0; transform: translate(-50%,0) scale(.6); }
+      30% { opacity: .8; transform: translate(-50%,-6px) scale(.9); }
+      70% { opacity: .4; transform: translate(-50%,-14px) scale(1.1); }
+      100% { opacity: 0; transform: translate(-50%,-22px) scale(1.2); }
+    }
+
+    .altar-controls {
+      border-radius: 12px;
+      border: 1px solid #333;
+      background: #151515;
+      padding: 8px;
+      font-size: 12px;
+    }
+    .form-row { display: flex; gap: 6px; margin-bottom: 6px; flex-wrap: wrap; }
+    .form-row label { font-size: 11px; color: #ccc; }
+    select,input[type=text],textarea,input[type=date] {
+      border-radius: 999px;
+      border: 1px solid #555;
+      background: #101010;
+      color: #f5f5f5;
+      font-size: 12px;
+      padding: 6px 9px;
+      flex: 1;
+      min-width: 0;
+    }
+    textarea { border-radius: 10px; resize: vertical; min-height: 48px; }
+
+    .quick-offerings {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      align-items: center;
+      margin: 2px 0 4px;
+      font-size: 10px;
+      color: #bbb;
+    }
+    .quick-offerings-label {
+      margin-right: 2px;
+    }
+
+    .catalog-list {
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      margin-top: 4px;
+      padding-bottom: 2px;
+    }
+    .catalog-card {
+      flex: 0 0 160px;
+      border-radius: 10px;
+      border: 1px solid #444;
+      padding: 6px;
+      background: #1b1b1b;
+      font-size: 11px;
+    }
+    .catalog-name { font-weight: 600; margin-bottom: 2px; }
+    .catalog-meta { font-size: 10px; color: #b5b5b5; margin-bottom: 2px; }
+
+    .offering-history {
+      margin-top: 6px;
+      font-size: 11px;
+      color: #ccc;
+    }
+    .offering-history-title {
+      font-weight: 600;
+      margin-bottom: 2px;
+      font-size: 11px;
+    }
+    .offering-history-list {
+      font-size: 11px;
+      color: #aaa;
+    }
+
+    .ritual-controls {
+      margin-top: 6px;
+      padding: 8px;
+      border-radius: 12px;
+      border: 1px solid #333;
+      background: #141414;
+      font-size: 11px;
+    }
+    .ritual-row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 6px; align-items: center; }
+    .ritual-label { font-size: 11px; color: #ccc; min-width: 70px; }
+    .ritual-status-text { font-size: 11px; color: #f5d27a; }
+
+    .profile-summary {
+      margin-bottom: 8px;
+      padding: 8px;
+      border-radius: 12px;
+      border: 1px solid #333;
+      background: #171717;
+      font-size: 12px;
+      line-height: 1.6;
+    }
+    .profile-summary-title { font-size: 13px; font-weight: 600; margin-bottom: 2px; }
+    .profile-summary-sub { font-size: 11px; color: #bbb; }
+    .profile-form-grid { display: flex; flex-direction: column; gap: 6px; margin-top: 4px; }
+    .profile-form-grid label { font-size: 11px; color: #ccc; display: block; margin-bottom: 2px; }
+    .profile-save-row { margin-top: 6px; display: flex; justify-content: flex-end; gap: 8px; align-items: center; }
+    .save-status { font-size: 10px; color: #9fd69f; }
+
+    .danger-zone {
+      margin-top: 8px;
+      padding: 8px;
+      border-radius: 10px;
+      border: 1px solid #553;
+      background: #1b1414;
+      font-size: 11px;
+      color: #f5d5d5;
+    }
+    .danger-zone-title {
+      font-weight: 600;
+      margin-bottom: 2px;
+      font-size: 11px;
+    }
+
+    .audio-grid { display: flex; flex-direction: column; gap: 8px; }
+    .audio-card {
+      border-radius: 10px;
+      border: 1px solid #333;
+      background: #171717;
+      padding: 8px;
+      font-size: 12px;
+    }
+    .audio-phrase { font-weight: 600; margin-bottom: 2px; }
+    .audio-note { font-size: 11px; color: #aaa; margin-top: 4px; }
+
+    .shukatsu-grid { display: flex; flex-direction: column; gap: 8px; }
+    .shukatsu-card {
+      border-radius: 10px;
+      border: 1px solid #333;
+      background: #181818;
+      padding: 8px;
+      font-size: 12px;
+    }
+    .shukatsu-title {
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 2px;
+    }
+    .shukatsu-sub {
+      font-size: 11px;
+      color: #bbb;
+      margin-bottom: 4px;
+    }
+    .shukatsu-save-row {
+      margin-top: 4px;
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      align-items: center;
+    }
+    .shukatsu-save-status {
+      font-size: 10px;
+      color: #9fd69f;
+    }
+
+    .footer {
+      margin-top: 10px;
+      font-size: 11px;
+      color: #888;
+      text-align: center;
+      line-height: 1.6;
+    }
+    .badge {
+      display: inline-block;
+      font-size: 10px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      border: 1px solid #666;
+      margin-top: 4px;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <div class="app-card">
+      <div class="app-header">
+        <div class="app-title-main">デジタル仏壇アプリ・プロトタイプ</div>
+        <div class="app-title-sub">①遺影 → ②仏壇＋お供え → ③プロフィール → ④音声 → ⑤終活メモ</div>
+        <div class="profile-switcher">
+          <span class="profile-switcher-label">ご供養する方：</span>
+          <div id="profileChipContainer"></div>
+          <span id="profileCountLabel" class="profile-count-label">（登録なし）</span>
+          <button id="btnDeleteProfile" type="button" class="btn btn-ghost btn-small profile-delete-btn" style="display:none;">
+            この方を削除
+          </button>
+        </div>
+      </div>
+
+      <div id="reengageBanner" class="reengage-banner">
+        <div id="reengageTitle" class="reengage-title">大切な方が呼んでいます（サンプル）</div>
+        <div id="reengageBody" class="reengage-body">
+          前回のご利用から少し時間が空きました。大切な方が、あなたに会いたがっています。
+        </div>
+        <div class="reengage-actions">
+          <span id="reengageStatus" class="shukatsu-save-status"></span>
+          <button id="btnReengageVoice" type="button" class="btn btn-small">「ありがとう」を聞く（デモ）</button>
+        </div>
+        <div class="reengage-note">
+          ※本番アプリでは、通知バッジや故人の声の再生を検討しています。このHTMLデモでは、簡易な効果音のみを鳴らします。
+        </div>
+      </div>
+
+      <div class="step-nav">
+        <button class="active" data-tab="portrait">① 遺影・位牌</button>
+        <button data-tab="altar">② 仏壇・お供え</button>
+        <button data-tab="profile">③ プロフィール</button>
+        <button data-tab="audio">④ 音声（将来案）</button>
+        <button data-tab="shukatsu">⑤ 終活メモ</button>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- Portrait Tab -->
+      <section id="tab-portrait" class="tab-panel active">
+        <div class="section-title">Portrait &amp; Ihai</div>
+        <div class="portrait-area">
+          <div class="portrait-frame">
+            <div id="portraitDisplay" class="portrait">
+              遺影（サンプル）<br>タップで変更は<br>アプリ版で実装予定
+            </div>
+          </div>
+          <div style="flex:1;">
+            <div id="portraitStatusPill" class="portrait-status-pill status-unsubmitted">
+              <span>未申請</span>（サンプル）
+            </div>
+            <div class="portrait-text" id="portraitStatusText">
+              ご家族・身近な方の遺影は、実際のアプリではご自身の端末から直接設定できる想定です（申請不要）です。<br>
+              有名人との公式コラボ遺影プランでは、運営側が用意した公式写真のみを利用し、スタッフが確認して表示します。<br>
+              このプロトタイプでは、下のボタンで「申請中／承認済み」の流れだけを体験できます（画像アップロードはまだ行いません）。
+            </div>
+            <div class="portrait-buttons">
+              <button id="btnRequestPortrait" class="btn-primary" type="button">遺影を申請したことにする（デモ）</button>
+              <button id="btnApprovePortrait" class="btn btn-ghost" type="button">審査で「承認」になったことにする（デモ）</button>
+            </div>
+            <div class="note">
+              ※画面上部の「＋追加」で入力した「祖父」「祖母」「ペット」などのラベルが、<br>
+              プロフィールでお名前未入力の場合の仏壇の遺影にも反映されます。<br>
+              （お名前を入力した場合は、そのお名前が優先されます）
+            </div>
+
+            <div class="ihai-preview-card">
+              <div class="ihai-preview-title">位牌のプレビュー（サンプル）</div>
+              <div id="ihaiPreviewText" class="ihai-preview-text">
+                プロフィールタブで「戒名」またはお名前を入力すると、ここに位牌の文字が表示されます。
+              </div>
+              <div class="note">
+                ※本番アプリでは、実際の位牌デザインにあわせたレイアウトで表示する想定です。
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Altar Tab -->
+      <section id="tab-altar" class="tab-panel">
+        <div class="section-title">Altar</div>
+        <div class="altar-layout">
+          <div class="altar-preview alt-basic" id="altarPreview">
+            <div class="altar-label" id="altarLabel">シンプルな仏壇（サンプル）</div>
+            <div class="altar-status" id="altarPortraitStatus">遺影：未承認</div>
+            <div class="altar-portrait-small" id="altarPortraitSmall">遺影確認中</div>
+            <div class="altar-items-row" id="altarItemsRow">
+              <div class="altar-item-pill">🕯 お線香</div>
+              <div class="altar-item-pill">💐 お花</div>
+            </div>
+            <div class="altar-ihai altar-draggable" id="altarIhai"></div>
+            <div class="altar-rin altar-draggable" id="altarRin"></div>
+            <div class="altar-rin-stick altar-draggable" id="altarRinStick"></div>
+            <div class="incense-area altar-draggable" id="incenseArea">
+              <div class="incense-burner"></div>
+              <div class="incense-stick"></div>
+              <div class="incense-smoke smoke-1"></div>
+              <div class="incense-smoke smoke-2"></div>
+              <div class="incense-smoke smoke-3"></div>
+            </div>
+            <div class="altar-shelf"></div>
+            <div class="altar-base"></div>
+          </div>
+
+          <div class="altar-controls">
+            <div class="form-row">
+              <label for="altarStyleSelect">仏壇のタイプ</label>
+              <select id="altarStyleSelect">
+                <option value="basic">シンプル仏壇（標準）</option>
+                <option value="gold">金仏壇（荘厳）</option>
+                <option value="modern">モダン仏壇（リビング向け）</option>
+              </select>
+            </div>
+            <div class="form-row">
+              <label for="altarItemsInput">お供えするもの（カンマ区切り）</label>
+              <input id="altarItemsInput" type="text" placeholder="例）お線香, お花, ビール, 和菓子">
+            </div>
+            <div class="quick-offerings">
+              <span class="quick-offerings-label">よく使うお供え：</span>
+              <button type="button" class="btn btn-small quick-offering" data-offering="お線香">お線香</button>
+              <button type="button" class="btn btn-small quick-offering" data-offering="お花">お花</button>
+              <button type="button" class="btn btn-small quick-offering" data-offering="和菓子">和菓子</button>
+              <button type="button" class="btn btn-small quick-offering" data-offering="コーヒー">コーヒー</button>
+              <button type="button" class="btn btn-small quick-offering" data-offering="ビール">ビール</button>
+            </div>
+            <div class="form-row" style="justify-content:flex-end;">
+              <button id="btnApplyAltar" type="button" class="btn btn-primary">仏壇に反映する（この方の設定）</button>
+            </div>
+            <div class="note">
+              ※実際のアプリでは、この下に「お供えカタログ」から商品を選び、<br>
+              「デジタルでお供え」または「実物を注文」を選ぶイメージです。
+            </div>
+
+            <!-- 仏壇カタログ（既存の仏壇タイプ選択） -->
+            <div style="margin-top:6px;">
+              <div style="font-size:11px;color:#bbb;margin-bottom:2px;">仏壇カタログ（サンプル）</div>
+              <div class="catalog-list">
+                <div class="catalog-card" data-style="basic">
+                  <div class="catalog-name">シンプル仏壇</div>
+                  <div class="catalog-meta">木目調・省スペース・一人暮らしにも</div>
+                  <button type="button" class="btn btn-ghost btn-small btn-catalog-choose">これを選ぶ</button>
+                </div>
+                <div class="catalog-card" data-style="gold">
+                  <div class="catalog-name">金仏壇</div>
+                  <div class="catalog-meta">伝統的・ご本尊と位牌を祀る本格タイプ</div>
+                  <button type="button" class="btn btn-ghost btn-small btn-catalog-choose">これを選ぶ</button>
+                </div>
+                <div class="catalog-card" data-style="modern">
+                  <div class="catalog-name">モダン仏壇</div>
+                  <div class="catalog-meta">リビングに馴染むデザイン・扉付き</div>
+                  <button type="button" class="btn btn-ghost btn-small btn-catalog-choose">これを選ぶ</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- お供えカタログ（実在商品イメージ） -->
+            <div style="margin-top:10px;">
+              <div style="font-size:11px;color:#bbb;margin-bottom:2px;">お供えカタログ（実在商品イメージ）</div>
+              <div class="catalog-list">
+                <!-- ビール -->
+                <div class="catalog-card">
+                  <div class="catalog-name">サンプルビールA（缶350ml）</div>
+                  <div class="catalog-meta">ビール会社とのコラボ想定</div>
+                  <div class="catalog-meta">カテゴリ：ビール</div>
+                  <button type="button" class="btn btn-small btn-offer-digital" data-offering="サンプルビールA（缶）">デジタルでお供え</button>
+                  <button type="button" class="btn btn-small btn-offer-buy">実物を注文（イメージ）</button>
+                </div>
+                <div class="catalog-card">
+                  <div class="catalog-name">サンプルビールB（瓶）</div>
+                  <div class="catalog-meta">ビール会社とのコラボ想定</div>
+                  <div class="catalog-meta">カテゴリ：ビール</div>
+                  <button type="button" class="btn btn-small btn-offer-digital" data-offering="サンプルビールB（瓶）">デジタルでお供え</button>
+                  <button type="button" class="btn btn-small btn-offer-buy">実物を注文（イメージ）</button>
+                </div>
+
+                <!-- 和菓子 -->
+                <div class="catalog-card">
+                  <div class="catalog-name">上品な和菓子詰め合わせ</div>
+                  <div class="catalog-meta">菓子メーカーとのコラボ想定</div>
+                  <div class="catalog-meta">カテゴリ：和菓子</div>
+                  <button type="button" class="btn btn-small btn-offer-digital" data-offering="和菓子詰め合わせ">デジタルでお供え</button>
+                  <button type="button" class="btn btn-small btn-offer-buy">実物を注文（イメージ）</button>
+                </div>
+
+                <!-- コーヒー・ソフトドリンク -->
+                <div class="catalog-card">
+                  <div class="catalog-name">香り豊かなドリップコーヒー</div>
+                  <div class="catalog-meta">コーヒーブランドとのコラボ想定</div>
+                  <div class="catalog-meta">カテゴリ：コーヒー</div>
+                  <button type="button" class="btn btn-small btn-offer-digital" data-offering="ドリップコーヒー">デジタルでお供え</button>
+                  <button type="button" class="btn btn-small btn-offer-buy">実物を注文（イメージ）</button>
+                </div>
+                <div class="catalog-card">
+                  <div class="catalog-name">ペットボトル緑茶</div>
+                  <div class="catalog-meta">清涼飲料メーカーとのコラボ想定</div>
+                  <div class="catalog-meta">カテゴリ：ソフトドリンク</div>
+                  <button type="button" class="btn btn-small btn-offer-digital" data-offering="ペットボトル緑茶">デジタルでお供え</button>
+                  <button type="button" class="btn btn-small btn-offer-buy">実物を注文（イメージ）</button>
+                </div>
+
+                <!-- 日本酒・酒造メーカー -->
+                <div class="catalog-card">
+                  <div class="catalog-name">特別純米酒サンプル</div>
+                  <div class="catalog-meta">酒造メーカーとのコラボ想定</div>
+                  <div class="catalog-meta">カテゴリ：日本酒</div>
+                  <button type="button" class="btn btn-small btn-offer-digital" data-offering="特別純米酒サンプル">デジタルでお供え</button>
+                  <button type="button" class="btn btn-small btn-offer-buy">実物を注文（イメージ）</button>
+                </div>
+
+                <!-- カップ麺 -->
+                <div class="catalog-card">
+                  <div class="catalog-name">カップ麺・しょうゆ味</div>
+                  <div class="catalog-meta">カップ麺メーカーとのコラボ想定</div>
+                  <div class="catalog-meta">カテゴリ：カップ麺</div>
+                  <button type="button" class="btn btn-small btn-offer-digital" data-offering="カップ麺（しょうゆ）">デジタルでお供え</button>
+                  <button type="button" class="btn btn-small btn-offer-buy">実物を注文（イメージ）</button>
+                </div>
+              </div>
+              <div class="note">
+                ※ここでは全て「サンプル商品」です。将来的には、ビール会社・酒造メーカー・菓子メーカー・カップ麺メーカー等と正式コラボし、<br>
+                実在パッケージをミニチュア表示＋ECサイト連携するイメージです。
+              </div>
+            </div>
+
+            <div style="margin-top:8px;">
+              <div style="font-size:11px;color:#bbb;margin-bottom:2px;">仏具の表示・位置（ドラッグで移動できます）</div>
+              <div style="font-size:11px;color:#aaa;margin-bottom:4px;">
+                仏壇内の「おりん・りん棒・香炉・位牌」は、指でドラッグして位置を動かせます。<br>
+                下のチェックで表示／非表示も切り替えできます（この端末内のみ）。
+              </div>
+              <div style="display:flex;flex-wrap:wrap;gap:8px;font-size:11px;">
+                <label><input type="checkbox" id="toggleIhai" checked> 位牌を表示</label>
+                <label><input type="checkbox" id="toggleIncense" checked> 香炉＋線香を表示</label>
+                <label><input type="checkbox" id="toggleRin" checked> おりんを表示</label>
+                <label><input type="checkbox" id="toggleRinStick" checked> りん棒を表示</label>
+              </div>
+            </div>
+
+            <div class="offering-history" id="offeringHistory">
+              <div class="offering-history-title">最近この方にお供えしたもの（この端末内）</div>
+              <div class="offering-history-list" id="offeringHistoryList">まだ記録はありません。</div>
+            </div>
+          </div>
+
+          <div class="ritual-controls">
+            <div class="ritual-row">
+              <span class="ritual-label">鈴：</span>
+              <button id="btnRingBell" type="button" class="btn btn-small">鈴を鳴らす（チーン）</button>
+              <span id="bellStatus" class="ritual-status-text"></span>
+            </div>
+            <div class="ritual-row">
+              <span class="ritual-label">線香：</span>
+              <button type="button" class="btn btn-small" data-incense="15">15秒</button>
+              <button type="button" class="btn btn-small" data-incense="30">30秒</button>
+              <button type="button" class="btn btn-small" data-incense="60">1分</button>
+              <span id="incenseStatus" class="ritual-status-text"></span>
+            </div>
+            <div class="note">
+              ※このデモではカウントダウンと香炉の煙の表示のみ行います。将来は本格的な効果音や、企業コラボの「限定お線香」なども検討できます。
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Profile Tab -->
+      <section id="tab-profile" class="tab-panel">
+        <div class="section-title">Profile</div>
+        <div class="profile-summary" id="profileSummary">
+          <div class="profile-summary-title" id="summaryName">まだ人物が登録されていません</div>
+          <div class="profile-summary-sub" id="summaryRelation">上部の「＋追加」ボタンから、「祖父」「祖母」「ペット」などを登録してください。</div>
+          <div style="margin-top:4px;" id="summaryDetail">人物を追加すると、ここに没年月日や戒名、一言メモが表示されます。</div>
+        </div>
+
+        <div class="note">
+          入力した内容は、この端末のブラウザ内（localStorage）にのみ保存されます。<br>
+          追加した方ごとに、別々にプロフィールが保存されます。<br>
+          サーバーへの送信は行われない、あくまでデモ用の画面です。
+        </div>
+
+        <div class="profile-form-grid">
+          <div>
+            <label for="profileNameInput">お名前</label>
+            <input id="profileNameInput" type="text" placeholder="例）山田 太郎 さん">
+          </div>
+          <div>
+            <label for="profileRelationInput">あなたとの関係</label>
+            <input id="profileRelationInput" type="text" placeholder="例）あなたのおじいちゃん（父方）">
+          </div>
+          <div>
+            <label for="profileDeathDateInput">没年月日</label>
+            <input id="profileDeathDateInput" type="date">
+          </div>
+          <div>
+            <label for="profileKaimyoInput">戒名（あれば）</label>
+            <input id="profileKaimyoInput" type="text" placeholder="例）○○院△△居士">
+          </div>
+          <div>
+            <label for="profileMemoInput">思い出メモ・一言</label>
+            <textarea id="profileMemoInput" placeholder="例）一緒に釣りに行った夏のことは一生忘れません。"></textarea>
+          </div>
+        </div>
+
+        <div class="profile-save-row">
+          <span class="save-status" id="profileSaveStatus"></span>
+          <button id="btnResetProfile" type="button" class="btn btn-ghost">入力をリセット</button>
+          <button id="btnSaveProfile" type="button" class="btn btn-primary">この端末に保存して反映（この方）</button>
+        </div>
+
+        <div class="danger-zone">
+          <div class="danger-zone-title">デモデータのリセット</div>
+          <div>
+            このブラウザに保存されたデモ用データ（人物・プロフィール・遺影ステータス・仏壇設定・フレーズ）をすべて削除します。<br>
+            もう一度まっさらな状態から試したいときに使います。
+          </div>
+          <button id="btnResetAllData" type="button" class="btn btn-small btn-ghost" style="margin-top:4px;border-color:#a55;color:#f88;">
+            この端末のデモデータをすべて削除
+          </button>
+        </div>
+      </section>
+
+      <!-- Audio Tab -->
+      <section id="tab-audio" class="tab-panel">
+        <div class="section-title">Audio (Plan)</div>
+        <div class="audio-grid">
+          <div class="audio-card">
+            <div class="audio-phrase">「いつもありがとう。」</div>
+            <div class="audio-note">
+              将来のアプリ版では、ここに故人の声を再現した音声ボタンが並びます。<br>
+              アップロードされた音声をもとに「ありがとう」「元気にしているかい？」などを再生できるイメージです。
+            </div>
+          </div>
+          <div class="audio-card">
+            <div class="audio-phrase">「たまにはお墓参りにも来てね。」</div>
+            <div class="audio-note">
+              声の再現は、同意を得た方のみ・安全に配慮した範囲で実装予定です。<br>
+              このHTMLデモでは実際の音声再生は行いません。
+            </div>
+          </div>
+          <div class="audio-card">
+            <div class="audio-phrase">この方のフレーズ候補（テキストのみ）</div>
+            <div style="font-size:11px;color:#bbb;margin-bottom:4px;">
+              将来の音声機能で使うかもしれない言葉を、人物ごとにメモしておく欄です（音声は再生されません）。
+            </div>
+            <textarea id="audioPhraseInput" rows="2" placeholder="例）いつも見守ってくれてありがとう。"></textarea>
+            <div style="margin-top:4px;display:flex;gap:6px;justify-content:flex-end;align-items:center;">
+              <span id="audioPhraseSaveStatus" style="font-size:10px;color:#9fd69f;"></span>
+              <button id="btnAddAudioPhrase" type="button" class="btn btn-small">フレーズを追加（この方）</button>
+            </div>
+            <div style="margin-top:6px;">
+              <div style="font-size:11px;color:#bbb;margin-bottom:2px;">登録済みのフレーズ</div>
+              <ul id="audioPhraseList" style="margin:0;padding-left:18px;font-size:11px;color:#ddd;"></ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Shukatsu Tab -->
+      <section id="tab-shukatsu" class="tab-panel">
+        <div class="section-title">Shukatsu</div>
+        <div class="shukatsu-grid">
+          <div class="shukatsu-card">
+            <div class="shukatsu-title">生前準備メモ（自分のこと）</div>
+            <div class="shukatsu-sub">
+              将来のご自身の「デジタル仏壇」に使うかもしれない情報を、簡単にメモしておくための欄です。<br>
+              このHTMLデモでは、この端末のブラウザ内にのみ保存されます。
+            </div>
+            <div class="profile-form-grid">
+              <div>
+                <label for="shukatsuNameInput">自分の名前</label>
+                <input id="shukatsuNameInput" type="text" placeholder="例）山田 花子">
+              </div>
+              <div>
+                <label for="shukatsuNickInput">呼んでほしい名前・呼び方</label>
+                <input id="shukatsuNickInput" type="text" placeholder="例）はなちゃん、おかあさん など">
+              </div>
+              <div>
+                <label for="shukatsuFavoritesInput">好きなもの・お供えしてほしいもの</label>
+                <textarea id="shukatsuFavoritesInput" placeholder="例）ビール、和菓子、コーヒー、ラーメン、○○という曲、△△という場所 など"></textarea>
+              </div>
+              <div>
+                <label for="shukatsuMessageInput">家族や大切な人へのメッセージ（メモ）</label>
+                <textarea id="shukatsuMessageInput" placeholder="例）無理しすぎず、笑って過ごしてね。いつもそばで見守っています。"></textarea>
+              </div>
+            </div>
+            <div class="shukatsu-save-row">
+              <span id="shukatsuSaveStatus" class="shukatsu-save-status"></span>
+              <button id="btnSaveShukatsu" type="button" class="btn btn-primary btn-small">この端末に終活メモを保存（サンプル）</button>
+            </div>
+          </div>
+          <div class="shukatsu-card">
+            <div class="shukatsu-title">この終活タブについて</div>
+            <div style="font-size:11px;color:#ccc;line-height:1.6;">
+              ・本番アプリでは、「生前モード」としてご本人の希望やメッセージを少しずつ書き残していける機能を想定しています。<br>
+              ・将来的には、ご家族用の「供養モード」とつなげて、「生前に残してくれたメモ」をデジタル仏壇にも反映できるイメージです。<br>
+              ・このHTMLデモでは、あくまで入力UIと端末内保存のみを体験する形です。
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="divider"></div>
+      <div class="footer">
+        デジタル仏壇アプリ プロトタイプ v11.1.1 / vA10beta（HTMLデモ）<br>
+        ・人物は最初「＋追加」のみ → ユーザーが「祖父」「祖母」「ペット」など自由に登録<br>
+        ・仏壇の遺影名は「プロフィールお名前」＞「＋追加ラベル」＞「大切な方」の順で表示<br>
+        ・人物ごとにプロフィール／遺影ステータス／仏壇設定／フレーズを localStorage に保存・削除<br>
+        ・鈴ボタン／線香カウントダウン＋香炉の煙つき（15秒・30秒・1分）<br>
+        ・「よく使うお供え」ボタン／「最近のお供え」履歴／デモデータ全削除ボタン付き<br>
+        ・ビール・和菓子・コーヒー・ソフトドリンク・日本酒・カップ麺の「お供えカタログ（実在商品イメージ）」追加<br>
+        ・前回利用から数日あいたときに「〇〇さんが呼んでいます」カード＋「ありがとう」デモ音（HTML内のみ）<br>
+        ・終活タブ（生前準備メモ用UI・この端末にだけ保存）を追加<br>
+        <span class="badge">テスト用 / 実サービスとは異なります</span>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const profileChipContainer = document.getElementById("profileChipContainer");
+    const profileCountLabel = document.getElementById("profileCountLabel");
+    const btnDeleteProfile = document.getElementById("btnDeleteProfile");
+    const PROFILE_LIST_KEY = "digital_altar_profile_list_vA10j";
+    const LAST_OPEN_KEY = "digital_altar_last_open_vA10k";
+    let currentProfileId = null;
+    let profileList = [];
+
+    function safeLoad(key, fallback) {
+      try {
+        const raw = localStorage.getItem(key);
+        if (!raw) return fallback;
+        return JSON.parse(raw);
+      } catch (e) { return fallback; }
+    }
+    function safeSave(key, value) {
+      try { localStorage.setItem(key, JSON.stringify(value)); } catch (e) {}
+    }
+
+    function loadProfileList() {
+      const saved = safeLoad(PROFILE_LIST_KEY, []);
+      if (Array.isArray(saved)) profileList = saved;
+      if (!profileList.some(p => p.id === currentProfileId)) {
+        currentProfileId = profileList.length ? profileList[0].id : null;
+      }
+    }
+    function saveProfileList() { safeSave(PROFILE_LIST_KEY, profileList); }
+
+    function updateProfileCountLabel() {
+      if (!profileCountLabel) return;
+      const count = profileList.length || 0;
+      if (!count) profileCountLabel.textContent = "（登録なし）";
+      else profileCountLabel.textContent = "登録人数：" + count + "人";
+    }
+
+    function renderProfileChips() {
+      profileChipContainer.innerHTML = "";
+      profileList.forEach(p => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "profile-chip" + (p.id === currentProfileId ? " active" : "");
+        btn.textContent = p.label;
+        btn.addEventListener("click", () => {
+          if (p.id !== currentProfileId) switchProfile(p.id);
+        });
+        profileChipContainer.appendChild(btn);
+      });
+      const addBtn = document.createElement("button");
+      addBtn.type = "button";
+      addBtn.className = "profile-chip add";
+      addBtn.textContent = "＋ 追加";
+      addBtn.addEventListener("click", () => {
+        const label = window.prompt("追加する方の呼び名を入力してください（例：祖父、祖母、父、母、ペット、推し など）");
+        if (!label) return;
+        const name = label.trim();
+        if (!name) return;
+        const id = "p_" + Date.now().toString(36);
+        profileList.push({ id, label: name });
+        saveProfileList();
+        currentProfileId = id;
+        switchProfile(id);
+      });
+      profileChipContainer.appendChild(addBtn);
+
+      if (btnDeleteProfile) {
+        btnDeleteProfile.style.display = profileList.length && currentProfileId ? "inline-flex" : "none";
+      }
+      updateProfileCountLabel();
+    }
+
+    function getStorageKey(base) {
+      if (!currentProfileId) return base + "_no_profile";
+      return base + "_" + currentProfileId;
+    }
+
+    const STORAGE_PROFILE_BASE = "digital_altar_profile_vA10j";
+    const STORAGE_PORTRAIT_BASE = "digital_altar_portrait_status_vA10j";
+    const STORAGE_ALTAR_BASE   = "digital_altar_altar_vA10j";
+    const STORAGE_OFFERING_HISTORY_BASE = "digital_altar_offering_history_vA10j";
+    const STORAGE_AUDIO_BASE   = "digital_altar_audio_vA10j";
+    const SHUKATSU_KEY = "digital_altar_shukatsu_self_vA10k";
+
+    const tabButtons = document.querySelectorAll(".step-nav button");
+    const tabPanels = {
+      portrait: document.getElementById("tab-portrait"),
+      altar: document.getElementById("tab-altar"),
+      profile: document.getElementById("tab-profile"),
+      audio: document.getElementById("tab-audio"),
+      shukatsu: document.getElementById("tab-shukatsu")
+    };
+    tabButtons.forEach(btn => {
+      btn.addEventListener("click", () => {
+        const tab = btn.dataset.tab;
+        tabButtons.forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        Object.keys(tabPanels).forEach(k => {
+          tabPanels[k].classList.toggle("active", k === tab);
+        });
+      });
+    });
+
+    const portraitStatusPill = document.getElementById("portraitStatusPill");
+    const portraitStatusText = document.getElementById("portraitStatusText");
+    const ihaiPreviewTextEl = document.getElementById("ihaiPreviewText");
+    const altarIhaiEl = document.getElementById("altarIhai");
+    const altarRinEl = document.getElementById("altarRin");
+    const altarRinStickEl = document.getElementById("altarRinStick");
+    const toggleIhaiEl = document.getElementById("toggleIhai");
+    const toggleIncenseEl = document.getElementById("toggleIncense");
+    const toggleRinEl = document.getElementById("toggleRin");
+    const toggleRinStickEl = document.getElementById("toggleRinStick");
+    const btnRequestPortrait = document.getElementById("btnRequestPortrait");
+    const btnApprovePortrait = document.getElementById("btnApprovePortrait");
+    const altarPortraitStatusEl = document.getElementById("altarPortraitStatus");
+    const altarPortraitSmallEl = document.getElementById("altarPortraitSmall");
+
+    const PORTRAIT_STATUS = { UNSUBMITTED:"unsubmitted", REVIEW:"review", APPROVED:"approved" };
+
+    function defaultNameForPortrait() {
+      const profile = safeLoad(getStorageKey(STORAGE_PROFILE_BASE), null);
+      if (profile && profile.name && profile.name.trim()) return profile.name.trim();
+      const found = profileList.find(p => p.id === currentProfileId);
+      if (found && found.label) return found.label + " さん";
+      return "大切な方";
+    }
+
+    function updatePortraitUI(status) {
+      portraitStatusPill.classList.remove("status-unsubmitted","status-review","status-approved");
+      let label = "", text = "";
+      if (!currentProfileId) status = PORTRAIT_STATUS.UNSUBMITTED;
+      if (status === PORTRAIT_STATUS.REVIEW) {
+        portraitStatusPill.classList.add("status-review");
+        label = "審査中";
+        text = "運営に遺影の申請が送信され、スタッフが確認している状態です。\n実際のアプリでは、審査が完了すると自動で「承認」に切り替わります。";
+        altarPortraitStatusEl.textContent = "遺影：審査中";
+        altarPortraitSmallEl.textContent = "審査中";
+        altarPortraitSmallEl.classList.remove("approved");
+      } else if (status === PORTRAIT_STATUS.APPROVED) {
+        portraitStatusPill.classList.add("status-approved");
+        label = "承認済";
+        text = "遺影の審査が完了し、承認された状態です。\n仏壇タブの遺影にも反映され、表示が明るくなります。";
+        altarPortraitStatusEl.textContent = "遺影：承認済";
+        altarPortraitSmallEl.textContent = defaultNameForPortrait();
+        altarPortraitSmallEl.classList.add("approved");
+      } else {
+        portraitStatusPill.classList.add("status-unsubmitted");
+        label = "未申請";
+        text = "まだ遺影の申請は行われていません。\n実際のアプリでは、ここから写真を送信して審査を依頼します。";
+        altarPortraitStatusEl.textContent = "遺影：未承認";
+        altarPortraitSmallEl.textContent = "遺影確認中";
+        altarPortraitSmallEl.classList.remove("approved");
+      }
+      portraitStatusPill.querySelector("span").textContent = label;
+      portraitStatusText.innerHTML = text.replace(/\n/g,"<br>");
+      if (currentProfileId) safeSave(getStorageKey(STORAGE_PORTRAIT_BASE), { status });
+    }
+
+    btnRequestPortrait.addEventListener("click", () => {
+      if (!currentProfileId) { alert("先に上部の「＋追加」から人物を登録してください。"); return; }
+      updatePortraitUI(PORTRAIT_STATUS.REVIEW);
+    });
+    btnApprovePortrait.addEventListener("click", () => {
+      if (!currentProfileId) { alert("先に上部の「＋追加」から人物を登録してください。"); return; }
+      updatePortraitUI(PORTRAIT_STATUS.APPROVED);
+    });
+
+    const altarPreviewEl = document.getElementById("altarPreview");
+    const altarLabelEl = document.getElementById("altarLabel");
+    const altarItemsInputEl = document.getElementById("altarItemsInput");
+    const altarItemsRowEl = document.getElementById("altarItemsRow");
+    const altarStyleSelectEl = document.getElementById("altarStyleSelect");
+    const btnApplyAltar = document.getElementById("btnApplyAltar");
+    const incenseAreaEl = document.getElementById("incenseArea");
+    const quickOfferingButtons = document.querySelectorAll(".quick-offering");
+    const offeringHistoryListEl = document.getElementById("offeringHistoryList");
+
+    function applyAltarStyle(style) {
+      altarPreviewEl.classList.remove("alt-basic","alt-gold","alt-modern");
+      let label = "";
+      if (style === "gold") { altarPreviewEl.classList.add("alt-gold"); label = "金仏壇（サンプル）"; }
+      else if (style === "modern") { altarPreviewEl.classList.add("alt-modern"); label = "モダン仏壇（サンプル）"; }
+      else { altarPreviewEl.classList.add("alt-basic"); label = "シンプルな仏壇（サンプル）"; }
+      altarLabelEl.textContent = label;
+    }
+    function applyAltarItems(text) {
+      altarItemsRowEl.innerHTML = "";
+      const base = text || "お線香, お花";
+      base.split(",").map(s=>s.trim()).filter(Boolean).forEach(p => {
+        const pill = document.createElement("div");
+        pill.className = "altar-item-pill";
+        pill.textContent = p;
+        altarItemsRowEl.appendChild(pill);
+      });
+    }
+
+    function renderOfferingHistory(list) {
+      if (!offeringHistoryListEl) return;
+      if (!list || !list.length) {
+        offeringHistoryListEl.textContent = "まだ記録はありません。";
+        return;
+      }
+      offeringHistoryListEl.innerHTML = list.map((t,i) => (i+1) + "．" + t).join("<br>");
+    }
+
+    function saveOfferingHistory(itemsText) {
+      if (!currentProfileId) return;
+      const trimmed = (itemsText || "").trim();
+      if (!trimmed) return;
+      const key = STORAGE_OFFERING_HISTORY_BASE + "_" + currentProfileId;
+      const current = safeLoad(key, []);
+      const updated = [trimmed, ...current.filter(v => v !== trimmed)].slice(0,5);
+      safeSave(key, updated);
+      renderOfferingHistory(updated);
+    }
+
+    function loadOfferingHistory() {
+      if (!currentProfileId) {
+        renderOfferingHistory([]);
+        return;
+      }
+      const list = safeLoad(STORAGE_OFFERING_HISTORY_BASE + "_" + currentProfileId, []);
+      renderOfferingHistory(list);
+    }
+
+    btnApplyAltar.addEventListener("click", () => {
+      const style = altarStyleSelectEl.value;
+      const items = altarItemsInputEl.value;
+      applyAltarStyle(style);
+      applyAltarItems(items);
+      if (currentProfileId) {
+        safeSave(getStorageKey(STORAGE_ALTAR_BASE), { style, items });
+        saveOfferingHistory(items);
+      } else {
+        alert("先に上部の「＋追加」から人物を登録してください。");
+      }
+    });
+
+    document.querySelectorAll(".btn-catalog-choose").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const card = btn.closest(".catalog-card");
+        const style = card.getAttribute("data-style") || "basic";
+        altarStyleSelectEl.value = style;
+        applyAltarStyle(style);
+        if (currentProfileId) safeSave(getStorageKey(STORAGE_ALTAR_BASE), { style, items: altarItemsInputEl.value });
+      });
+    });
+
+    quickOfferingButtons.forEach(btn => {
+      btn.addEventListener("click", () => {
+        const word = btn.dataset.offering || btn.textContent.trim();
+        let current = altarItemsInputEl.value.trim();
+        if (!current) altarItemsInputEl.value = word;
+        else if (!current.includes(word)) altarItemsInputEl.value = current + ", " + word;
+      });
+    });
+
+    document.querySelectorAll(".btn-offer-digital").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const word = btn.dataset.offering || btn.textContent.trim();
+        let current = altarItemsInputEl.value.trim();
+        if (!current) altarItemsInputEl.value = word;
+        else if (!current.includes(word)) altarItemsInputEl.value = current + ", " + word;
+        alert("「" + word + "」をお供え候補に追加しました。\n「仏壇に反映する」ボタンで、この方の仏壇に反映されます。");
+      });
+    });
+
+    document.querySelectorAll(".btn-offer-buy").forEach(btn => {
+      btn.addEventListener("click", () => {
+        alert("実物を注文するためのECサイトへ遷移するイメージです。\n将来的に、ビール会社・酒造メーカー・菓子メーカー・カップ麺メーカー等と連携して実装予定です。");
+      });
+    });
+
+    const btnRingBell = document.getElementById("btnRingBell");
+    const bellStatus = document.getElementById("bellStatus");
+    const incenseButtons = document.querySelectorAll("button[data-incense]");
+    const incenseStatus = document.getElementById("incenseStatus");
+    let incenseTimerId = null;
+    let incenseRemaining = 0;
+    let audioCtx = null;
+
+    function ringBellSound() {
+      try {
+        if (!audioCtx) {
+          const AC = window.AudioContext || window.webkitAudioContext;
+          if (!AC) return;
+          audioCtx = new AC();
+        }
+        const ctx = audioCtx;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = "sine";
+        osc.frequency.value = 1000;
+        gain.gain.setValueAtTime(0, ctx.currentTime);
+        gain.gain.linearRampToValueAtTime(0.5, ctx.currentTime + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.8);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.9);
+      } catch (e) {}
+    }
+
+    btnRingBell.addEventListener("click", () => {
+      ringBellSound();
+      bellStatus.textContent = "チーン…";
+      setTimeout(() => { bellStatus.textContent = ""; }, 1500);
+    });
+
+    function startIncense(seconds) {
+      if (incenseTimerId) { clearInterval(incenseTimerId); incenseTimerId = null; }
+      incenseRemaining = seconds;
+      updateIncenseStatus();
+      incenseButtons.forEach(b => b.disabled = true);
+      incenseAreaEl.classList.add("active");
+      incenseTimerId = setInterval(() => {
+        incenseRemaining -= 1;
+        if (incenseRemaining <= 0) {
+          clearInterval(incenseTimerId);
+          incenseTimerId = null;
+          incenseStatus.textContent = "線香が焚き終わりました。";
+          incenseButtons.forEach(b => b.disabled = false);
+          setTimeout(() => {
+            incenseStatus.textContent = "";
+            incenseAreaEl.classList.remove("active");
+          }, 3000);
+        } else {
+          updateIncenseStatus();
+        }
+      }, 1000);
+    }
+    function updateIncenseStatus() {
+      incenseStatus.textContent = "線香：残り " + incenseRemaining + " 秒";
+    }
+    incenseButtons.forEach(btn => {
+      btn.addEventListener("click", () => {
+        const sec = Number(btn.dataset.incense || "0");
+        if (sec > 0) startIncense(sec);
+      });
+    });
+
+
+    function makeDraggable(el) {
+      if (!el) return;
+      let isDown = false;
+      let offsetX = 0;
+      let offsetY = 0;
+      let elemW = 0;
+      let elemH = 0;
+
+      el.addEventListener("pointerdown", (e) => {
+        e.preventDefault();
+        isDown = true;
+        try { el.setPointerCapture(e.pointerId); } catch (err) {}
+        const rect = el.getBoundingClientRect();
+        offsetX = e.clientX - rect.left;
+        offsetY = e.clientY - rect.top;
+        elemW = rect.width;
+        elemH = rect.height;
+      });
+      el.addEventListener("pointermove", (e) => {
+        if (!isDown) return;
+        const containerRect = altarPreviewEl.getBoundingClientRect();
+        let x = e.clientX - containerRect.left - offsetX;
+        let y = e.clientY - containerRect.top - offsetY;
+        if (x < 0) x = 0;
+        if (y < 0) y = 0;
+        if (x > containerRect.width - elemW) x = containerRect.width - elemW;
+        if (y > containerRect.height - elemH) y = containerRect.height - elemH;
+        el.style.left = x + "px";
+        el.style.top = y + "px";
+        el.style.right = "auto";
+        el.style.bottom = "auto";
+        el.style.transform = "none";
+      });
+      el.addEventListener("pointerup", (e) => {
+        isDown = false;
+        try { el.releasePointerCapture(e.pointerId); } catch (err) {}
+      });
+      el.addEventListener("pointercancel", (e) => {
+        isDown = false;
+        try { el.releasePointerCapture(e.pointerId); } catch (err) {}
+      });
+    }
+
+    function initDraggables() {
+      const list = document.querySelectorAll(".altar-draggable");
+      list.forEach(el => makeDraggable(el));
+    }
+
+    if (toggleIncenseEl && incenseAreaEl) {
+      toggleIncenseEl.addEventListener("change", () => {
+        incenseAreaEl.style.display = toggleIncenseEl.checked ? "" : "none";
+      });
+    }
+    if (toggleRinEl && altarRinEl) {
+      toggleRinEl.addEventListener("change", () => {
+        altarRinEl.style.display = toggleRinEl.checked ? "" : "none";
+      });
+    }
+    if (toggleRinStickEl && altarRinStickEl) {
+      toggleRinStickEl.addEventListener("change", () => {
+        altarRinStickEl.style.display = toggleRinStickEl.checked ? "" : "none";
+      });
+    }
+    if (toggleIhaiEl) {
+      toggleIhaiEl.addEventListener("change", () => {
+        updateIhaiUI();
+      });
+    }
+
+    const profileSummaryName = document.getElementById("summaryName");
+    const profileSummaryRelation = document.getElementById("summaryRelation");
+    const profileSummaryDetail = document.getElementById("summaryDetail");
+    const profileNameInput = document.getElementById("profileNameInput");
+    const profileRelationInput = document.getElementById("profileRelationInput");
+    const profileDeathDateInput = document.getElementById("profileDeathDateInput");
+    const profileKaimyoInput = document.getElementById("profileKaimyoInput");
+    const profileMemoInput = document.getElementById("profileMemoInput");
+    const btnSaveProfile = document.getElementById("btnSaveProfile");
+    const btnResetProfile = document.getElementById("btnResetProfile");
+    const profileSaveStatus = document.getElementById("profileSaveStatus");
+    const btnResetAllData = document.getElementById("btnResetAllData");
+
+    function formatDateJP(dateStr) {
+      if (!dateStr) return "----年--月--日（未設定）";
+      const d = new Date(dateStr);
+      if (isNaN(d.getTime())) return "----年--月--日（未設定）";
+      return d.getFullYear() + "年" + (d.getMonth()+1) + "月" + d.getDate() + "日ごろ";
+    }
+    function defaultRelationForProfile() { return "あなたの大切な方"; }
+    function defaultMemoForProfile() { return "いつも見守ってくれてありがとう。無理しすぎず、元気で過ごすんだよ。"; }
+
+    function getIhaiTextForCurrentProfile() {
+      if (!currentProfileId) return "";
+      const p = safeLoad(getStorageKey(STORAGE_PROFILE_BASE), null);
+      let base = "";
+      if (p) {
+        if (p.kaimyo && p.kaimyo.trim()) {
+          base = p.kaimyo.trim();
+        } else if (p.name && p.name.trim()) {
+          base = p.name.trim();
+        }
+      }
+      if (!base) {
+        const found = profileList.find(pf => pf.id === currentProfileId);
+        if (found && found.label) base = found.label + " 位牌";
+      }
+      return base;
+    }
+
+    function updateIhaiUI() {
+      const text = currentProfileId ? getIhaiTextForCurrentProfile() : "";
+      const visibleByToggle = !toggleIhaiEl || toggleIhaiEl.checked;
+
+      if (ihaiPreviewTextEl) {
+        if (text) {
+          ihaiPreviewTextEl.textContent = text;
+        } else {
+          ihaiPreviewTextEl.textContent = "プロフィールタブで「戒名」またはお名前を入力すると、ここに位牌の文字が表示されます。";
+        }
+      }
+      if (altarIhaiEl) {
+        if (text && visibleByToggle) {
+          altarIhaiEl.style.display = "block";
+          altarIhaiEl.textContent = text;
+        } else {
+          altarIhaiEl.style.display = "none";
+          altarIhaiEl.textContent = text || "";
+        }
+      }
+    }
+
+    function defaultNameForSummary() {
+      const profile = safeLoad(getStorageKey(STORAGE_PROFILE_BASE), null);
+      if (profile && profile.name && profile.name.trim()) return profile.name.trim();
+      const found = profileList.find(p => p.id === currentProfileId);
+      if (found && found.label) return found.label + " さん";
+      return "大切な方";
+    }
+
+    function applyProfileToSummary(p) {
+      if (!currentProfileId) {
+        profileSummaryName.textContent = "まだ人物が登録されていません";
+        profileSummaryRelation.textContent = "上部の「＋追加」ボタンから、「祖父」「祖母」「ペット」などを登録してください。";
+        profileSummaryDetail.innerHTML = "人物を追加すると、ここに没年月日や戒名、一言メモが表示されます。";
+        return;
+      }
+      const name = (p && p.name && p.name.trim()) ? p.name.trim() : defaultNameForSummary();
+      const relation = (p && p.relation && p.relation.trim()) ? p.relation.trim() : defaultRelationForProfile();
+      const deathText = formatDateJP(p && p.deathDate);
+      const kaimyo = (p && p.kaimyo && p.kaimyo.trim()) ? p.kaimyo.trim() : "未設定";
+      const memo = (p && p.memo && p.memo.trim()) ? p.memo.trim() : defaultMemoForProfile();
+      profileSummaryName.textContent = name;
+      profileSummaryRelation.textContent = relation;
+      profileSummaryDetail.innerHTML = "没年月日：" + deathText + "<br>戒名：" + kaimyo + "<br>一言メモ：" + memo;
+
+      const pStatus = safeLoad(getStorageKey(STORAGE_PORTRAIT_BASE), {});
+      if (pStatus && pStatus.status === PORTRAIT_STATUS.APPROVED) {
+        altarPortraitSmallEl.textContent = defaultNameForPortrait();
+        altarPortraitSmallEl.classList.add("approved");
+      }
+      updateIhaiUI();
+    }
+
+    function loadProfile() {
+      if (!currentProfileId) {
+        profileNameInput.value = "";
+        profileRelationInput.value = "";
+        profileDeathDateInput.value = "";
+        profileKaimyoInput.value = "";
+        profileMemoInput.value = "";
+        applyProfileToSummary({});
+        return;
+      }
+      const saved = safeLoad(getStorageKey(STORAGE_PROFILE_BASE), null);
+      if (saved) {
+        profileNameInput.value = saved.name || "";
+        profileRelationInput.value = saved.relation || "";
+        profileDeathDateInput.value = saved.deathDate || "";
+        profileKaimyoInput.value = saved.kaimyo || "";
+        profileMemoInput.value = saved.memo || "";
+        applyProfileToSummary(saved);
+      } else {
+        profileNameInput.value = "";
+        profileRelationInput.value = "";
+        profileDeathDateInput.value = "";
+        profileKaimyoInput.value = "";
+        profileMemoInput.value = "";
+        applyProfileToSummary({});
+      }
+    }
+
+    btnSaveProfile.addEventListener("click", () => {
+      if (!currentProfileId) { alert("先に上部の「＋追加」から人物を登録してください。"); return; }
+      const profile = {
+        name: profileNameInput.value.trim(),
+        relation: profileRelationInput.value.trim(),
+        deathDate: profileDeathDateInput.value,
+        kaimyo: profileKaimyoInput.value.trim(),
+        memo: profileMemoInput.value.trim()
+      };
+      safeSave(getStorageKey(STORAGE_PROFILE_BASE), profile);
+      applyProfileToSummary(profile);
+      updateIhaiUI();
+      profileSaveStatus.textContent = "この方の情報を、この端末に保存しました";
+      setTimeout(() => { profileSaveStatus.textContent = ""; }, 2500);
+    });
+
+    btnResetProfile.addEventListener("click", () => {
+      profileNameInput.value = "";
+      profileRelationInput.value = "";
+      profileDeathDateInput.value = "";
+      profileKaimyoInput.value = "";
+      profileMemoInput.value = "";
+      if (currentProfileId) safeSave(getStorageKey(STORAGE_PROFILE_BASE), {});
+      applyProfileToSummary({});
+      updateIhaiUI();
+      profileSaveStatus.textContent = "入力をリセットしました";
+      setTimeout(() => { profileSaveStatus.textContent = ""; }, 2500);
+    });
+
+    if (btnResetAllData) {
+      btnResetAllData.addEventListener("click", () => {
+        if (!window.confirm("このブラウザに保存されたデモ用データをすべて削除しますか？\n登録した人物・プロフィール・遺影ステータス・仏壇設定・フレーズが消えます。")) return;
+        try {
+          const keysToRemove = [];
+          for (let i = 0; i < localStorage.length; i++) {
+            const k = localStorage.key(i);
+            if (k && k.indexOf("digital_altar_") === 0) keysToRemove.push(k);
+          }
+          keysToRemove.forEach(k => localStorage.removeItem(k));
+        } catch (e) {}
+        alert("デモデータを削除しました。画面を初期状態に戻します。");
+        location.reload();
+      });
+    }
+
+    function loadPortraitStatusForProfile() {
+      if (!currentProfileId) { updatePortraitUI(PORTRAIT_STATUS.UNSUBMITTED); return; }
+      const savedPortrait = safeLoad(getStorageKey(STORAGE_PORTRAIT_BASE), null);
+      if (savedPortrait && savedPortrait.status) updatePortraitUI(savedPortrait.status);
+      else updatePortraitUI(PORTRAIT_STATUS.UNSUBMITTED);
+    }
+    function loadAltarForProfile() {
+      const savedAltar = currentProfileId ? safeLoad(getStorageKey(STORAGE_ALTAR_BASE), null) : null;
+      if (savedAltar) {
+        const style = savedAltar.style || "basic";
+        altarStyleSelectEl.value = style;
+        applyAltarStyle(style);
+        altarItemsInputEl.value = savedAltar.items || "";
+        applyAltarItems(savedAltar.items || "");
+      } else {
+        altarStyleSelectEl.value = "basic";
+        applyAltarStyle("basic");
+        altarItemsInputEl.value = "";
+        applyAltarItems("");
+      }
+    }
+
+    const audioPhraseInput = document.getElementById("audioPhraseInput");
+    const audioPhraseSaveStatus = document.getElementById("audioPhraseSaveStatus");
+    const audioPhraseList = document.getElementById("audioPhraseList");
+    const btnAddAudioPhrase = document.getElementById("btnAddAudioPhrase");
+
+    function renderAudioPhrases(list) {
+      if (!audioPhraseList) return;
+      audioPhraseList.innerHTML = "";
+      if (!list || !list.length) {
+        const li = document.createElement("li");
+        li.textContent = "まだフレーズは登録されていません。";
+        li.style.color = "#999";
+        audioPhraseList.appendChild(li);
+        return;
+      }
+      list.forEach(text => {
+        const li = document.createElement("li");
+        li.textContent = text;
+        audioPhraseList.appendChild(li);
+      });
+    }
+
+    function loadAudioPhrases() {
+      if (!currentProfileId) {
+        renderAudioPhrases([]);
+        return;
+      }
+      const list = safeLoad(STORAGE_AUDIO_BASE + "_" + currentProfileId, []);
+      renderAudioPhrases(list);
+    }
+
+    if (btnAddAudioPhrase) {
+      btnAddAudioPhrase.addEventListener("click", () => {
+        if (!currentProfileId) { alert("先に上部の「＋追加」から人物を登録してください。"); return; }
+        const text = (audioPhraseInput.value || "").trim();
+        if (!text) return;
+        const key = STORAGE_AUDIO_BASE + "_" + currentProfileId;
+        const list = safeLoad(key, []);
+        const updated = [text, ...list].slice(0,10);
+        safeSave(key, updated);
+        renderAudioPhrases(updated);
+        audioPhraseInput.value = "";
+        audioPhraseSaveStatus.textContent = "この方のフレーズを保存しました";
+        setTimeout(() => { audioPhraseSaveStatus.textContent = ""; }, 2500);
+      });
+    }
+
+    // 終活タブ：生前準備メモ
+    const shukatsuNameInput = document.getElementById("shukatsuNameInput");
+    const shukatsuNickInput = document.getElementById("shukatsuNickInput");
+    const shukatsuFavoritesInput = document.getElementById("shukatsuFavoritesInput");
+    const shukatsuMessageInput = document.getElementById("shukatsuMessageInput");
+    const btnSaveShukatsu = document.getElementById("btnSaveShukatsu");
+    const shukatsuSaveStatus = document.getElementById("shukatsuSaveStatus");
+
+    function loadShukatsu() {
+      if (!shukatsuNameInput) return;
+      const data = safeLoad(SHUKATSU_KEY, null);
+      if (data) {
+        shukatsuNameInput.value = data.name || "";
+        shukatsuNickInput.value = data.nick || "";
+        shukatsuFavoritesInput.value = data.favorites || "";
+        shukatsuMessageInput.value = data.message || "";
+      }
+    }
+
+    if (btnSaveShukatsu) {
+      btnSaveShukatsu.addEventListener("click", () => {
+        const data = {
+          name: (shukatsuNameInput.value || "").trim(),
+          nick: (shukatsuNickInput.value || "").trim(),
+          favorites: (shukatsuFavoritesInput.value || "").trim(),
+          message: (shukatsuMessageInput.value || "").trim()
+        };
+        safeSave(SHUKATSU_KEY, data);
+        if (shukatsuSaveStatus) {
+          shukatsuSaveStatus.textContent = "この端末に終活メモを保存しました（生前準備モード・サンプル）。";
+          setTimeout(() => { shukatsuSaveStatus.textContent = ""; }, 2800);
+        }
+      });
+    }
+
+    // 「〇〇さんが呼んでいます」カード（前回利用から数日あいたとき）
+    const reengageBanner = document.getElementById("reengageBanner");
+    const reengageTitle = document.getElementById("reengageTitle");
+    const reengageBody = document.getElementById("reengageBody");
+    const reengageStatus = document.getElementById("reengageStatus");
+    const btnReengageVoice = document.getElementById("btnReengageVoice");
+
+
+    function getReengageDisplayName() {
+      // 複数人登録されている場合は、その中からランダムに1人を選びます。
+      // プロフィールにお名前があれば優先し、最後は「さん」を付けて表示します。
+      if (Array.isArray(profileList) && profileList.length > 0) {
+        const idx = Math.floor(Math.random() * profileList.length);
+        const meta = profileList[idx];
+        let base = "";
+        if (meta && meta.id) {
+          const key = STORAGE_PROFILE_BASE + "_" + meta.id;
+          const p = safeLoad(key, null);
+          if (p && p.name && p.name.trim()) {
+            base = p.name.trim();
+          } else if (meta.label) {
+            base = meta.label + " さん";
+          }
+        }
+        if (!base) {
+          // 念のためのフォールバック
+          base = defaultNameForSummary();
+        }
+        if (!/さん$/.test(base)) {
+          base += "さん";
+        }
+        return base;
+      }
+      // プロフィールが1人もいない場合は、従来どおりの名前を使う
+      let base = defaultNameForSummary();
+      if (!/さん$/.test(base)) {
+        base += "さん";
+      }
+      return base;
+    }
+
+    function showReengageIfNeeded() {
+      let now = new Date();
+      let lastStr = null;
+      try { lastStr = localStorage.getItem(LAST_OPEN_KEY); } catch (e) {}
+      let shouldShow = false;
+      let diffDays = null;
+      if (lastStr) {
+        const last = new Date(lastStr);
+        if (!isNaN(last.getTime())) {
+          const diffMs = now.getTime() - last.getTime();
+          diffDays = diffMs / (1000 * 60 * 60 * 24);
+          if (diffDays >= 3) shouldShow = true;
+        }
+      }
+      try { localStorage.setItem(LAST_OPEN_KEY, now.toISOString()); } catch (e) {}
+
+      if (!shouldShow) {
+        if (reengageBanner) reengageBanner.style.display = "none";
+        return;
+      }
+      if (!reengageBanner || !reengageTitle || !reengageBody) {
+        return;
+      }
+      const name = getReengageDisplayName();
+      reengageTitle.textContent = name + " が呼んでいます（サンプル）";
+      let msg = "前回のご利用から少し時間が空きました。";
+      if (diffDays && diffDays >= 1) {
+        const approx = Math.round(diffDays);
+        msg = "前回のご利用から約 " + approx + " 日ぶりです。";
+      }
+      reengageBody.textContent = msg + " " + name + " が、あなたに会いたがっています。";
+      reengageStatus.textContent = "";
+      if (btnReengageVoice) btnReengageVoice.disabled = false;
+      reengageBanner.style.display = "block";
+    }
+
+    if (btnReengageVoice) {
+      btnReengageVoice.addEventListener("click", () => {
+        ringBellSound();
+        if (reengageStatus) {
+          reengageStatus.textContent = "「ありがとう」（イメージ）の音を鳴らしました。";
+          setTimeout(() => { reengageStatus.textContent = ""; }, 2500);
+        }
+        btnReengageVoice.disabled = true;
+      });
+    }
+
+    function switchProfile(id) {
+      currentProfileId = id;
+      renderProfileChips();
+      loadProfile();
+      loadPortraitStatusForProfile();
+      loadAltarForProfile();
+      loadOfferingHistory();
+      loadAudioPhrases();
+      updateIhaiUI();
+      if (incenseTimerId) { clearInterval(incenseTimerId); incenseTimerId = null; }
+      incenseRemaining = 0;
+      incenseStatus.textContent = "";
+      incenseAreaEl.classList.remove("active");
+      incenseButtons.forEach(b => b.disabled = false);
+    }
+
+    if (btnDeleteProfile) {
+      btnDeleteProfile.addEventListener("click", () => {
+        if (!currentProfileId) return;
+        const target = profileList.find(p => p.id === currentProfileId);
+        const label = target && target.label ? target.label : "この方";
+        if (!window.confirm(label + " を削除しますか？\n（この方のプロフィール・遺影ステータス・仏壇設定・フレーズも削除されます）")) return;
+        const idToDelete = currentProfileId;
+        try {
+          localStorage.removeItem(STORAGE_PROFILE_BASE + "_" + idToDelete);
+          localStorage.removeItem(STORAGE_PORTRAIT_BASE + "_" + idToDelete);
+          localStorage.removeItem(STORAGE_ALTAR_BASE + "_" + idToDelete);
+          localStorage.removeItem(STORAGE_OFFERING_HISTORY_BASE + "_" + idToDelete);
+          localStorage.removeItem(STORAGE_AUDIO_BASE + "_" + idToDelete);
+        } catch (e) {}
+        profileList = profileList.filter(p => p.id !== idToDelete);
+        saveProfileList();
+        currentProfileId = profileList.length ? profileList[0].id : null;
+        if (currentProfileId) {
+          switchProfile(currentProfileId);
+        } else {
+          renderProfileChips();
+          loadProfile();
+          loadPortraitStatusForProfile();
+          loadAltarForProfile();
+          renderOfferingHistory([]);
+          renderAudioPhrases([]);
+        }
+      });
+    }
+
+    (function init() {
+      loadProfileList();
+      renderProfileChips();
+      if (currentProfileId) {
+        switchProfile(currentProfileId);
+      } else {
+        applyAltarStyle("basic");
+        applyAltarItems("");
+        updatePortraitUI(PORTRAIT_STATUS.UNSUBMITTED);
+        applyProfileToSummary({});
+        renderOfferingHistory([]);
+        renderAudioPhrases([]);
+        updateIhaiUI();
+      }
+      loadShukatsu();
+      showReengageIfNeeded();
+      initDraggables();
+    })();
+  </script>
+</body>
+</html>
