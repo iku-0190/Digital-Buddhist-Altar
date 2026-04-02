@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>デジタル仏壇 vA11b 超安定版</title>
+<style>
+body{margin:0;background:#111;color:#f4f4f4;font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif}
+.wrap{max-width:560px;margin:0 auto;padding:14px}
+.app{background:#171717;border:1px solid #333;border-radius:18px;padding:14px}
+h1{font-size:18px;margin:0 0 4px}
+.sub{font-size:11px;color:#bbb;line-height:1.6;margin-bottom:12px}
+.tabs{display:flex;gap:6px;overflow:auto;margin-bottom:12px}
+.tabs button{border:1px solid #555;background:#111;color:#eee;border-radius:999px;padding:8px 11px;font-size:11px;white-space:nowrap}
+.tabs button.active{background:linear-gradient(135deg,#f6d68c,#ae8331);color:#1b1406;border-color:#f6d68c;font-weight:700}
+.panel{display:none}
+.panel.active{display:block}
+.card{background:#1d1d1d;border:1px solid #333;border-radius:14px;padding:10px;margin-bottom:10px}
+.title{font-size:13px;font-weight:700;margin-bottom:6px}
+.note{font-size:11px;color:#bbb;line-height:1.7}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px}
+.btn{border:1px solid #666;background:#151515;color:#f4f4f4;border-radius:999px;padding:8px 12px;font-size:12px}
+.btn.primary{background:linear-gradient(135deg,#f6d68c,#ae8331);color:#1b1406;border-color:#f6d68c;font-weight:700}
+input[type=text], textarea, input[type=file]{width:100%;border:1px solid #555;background:#101010;color:#f4f4f4;border-radius:12px;padding:9px 10px;font-size:12px}
+textarea{min-height:70px;resize:vertical}
+.altar-box{position:relative;height:360px;border-radius:16px;border:1px solid #705a34;background:radial-gradient(circle at top,#4a321a 0%,#17110b 58%);overflow:hidden}
+.altar-box:before{content:"";position:absolute;left:20%;right:20%;top:8%;bottom:18%;border:1px solid rgba(255,233,184,.25);border-radius:14px}
+.altar-title{position:absolute;top:14px;left:0;right:0;text-align:center;font-size:12px;color:#f5dfb3}
+.portrait{position:absolute;top:90px;left:50%;transform:translateX(-50%);width:88px;height:108px;border-radius:10px;border:2px solid rgba(255,255,255,.75);background:#efefef;color:#222;display:flex;align-items:center;justify-content:center;text-align:center;font-size:11px;padding:6px}
+.shelf{position:absolute;left:10%;right:10%;bottom:92px;height:18px;border-radius:10px;background:linear-gradient(to bottom,rgba(255,255,255,.05),rgba(0,0,0,.75))}
+.base{position:absolute;left:0;right:0;bottom:0;height:64px;background:linear-gradient(to bottom,rgba(255,255,255,.02),rgba(0,0,0,.85))}
+.altar-btns{display:flex;gap:8px;overflow:auto;white-space:nowrap;margin-top:10px}
+.offering-list{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.pill{padding:5px 9px;border-radius:999px;background:rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.16);font-size:11px}
+.memorial-preview img,.memorial-grid img{width:100%;border-radius:12px}
+.memorial-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin-top:10px}
+.item{background:#161616;border:1px solid #363636;border-radius:14px;padding:8px}
+.footer{font-size:11px;color:#999;line-height:1.7;text-align:center;margin-top:12px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="app">
+    <h1>デジタル仏壇 vA11b 超安定版</h1>
+    <div class="sub">前の安定版で不具合が出たので、タブ切替とメモリアル保存を単純化した版です。</div>
+
+    <div class="tabs">
+      <button class="active" data-tab="altar">① 仏壇</button>
+      <button data-tab="memorial">② メモリアル</button>
+      <button data-tab="shukatsu">③ 終活メモ</button>
+      <button data-tab="profile">④ プロフィール</button>
+    </div>
+
+    <section id="tab-altar" class="panel active">
+      <div class="card">
+        <div class="title">仏壇</div>
+        <div class="altar-box">
+          <div class="altar-title">縦長仏壇（超安定版）</div>
+          <div class="portrait" id="portraitName">遺影</div>
+          <div class="shelf"></div>
+          <div class="base"></div>
+        </div>
+        <div class="altar-btns">
+          <button class="btn" id="btnBell">鈴を鳴らす</button>
+          <button class="btn" id="btnIncense15">線香15秒</button>
+          <button class="btn" id="btnIncense30">線香30秒</button>
+          <button class="btn" id="btnIncense60">線香1分</button>
+          <button class="btn" id="btnAddOffering">お供えを追加</button>
+        </div>
+        <div id="altarStatus" class="note" style="margin-top:8px;"></div>
+        <div id="offeringList" class="offering-list"></div>
+      </div>
+    </section>
+
+    <section id="tab-memorial" class="panel">
+      <div class="card">
+        <div class="title">メモリアル（写真）</div>
+        <div class="note">写真を選んで、メモを書いて、「一覧に追加」を押してください。</div>
+        <div class="row"><input id="memorialFile" type="file" accept="image/*"></div>
+        <div class="row"><input id="memorialNote" type="text" placeholder="例）2026年 正月のお墓参り"></div>
+        <div class="row"><button class="btn primary" id="btnSaveMemorial">一覧に追加</button></div>
+        <div id="memorialPreview" class="memorial-preview" style="margin-top:10px;"></div>
+        <div id="memorialGrid" class="memorial-grid"></div>
+      </div>
+    </section>
+
+    <section id="tab-shukatsu" class="panel">
+      <div class="card">
+        <div class="title">終活メモ</div>
+        <textarea id="shukatsuMemo" placeholder="好きなもの、伝えたいこと、お供えしてほしいもの など"></textarea>
+        <div class="row"><button class="btn primary" id="btnSaveShukatsu">保存</button><span id="shukatsuStatus" class="note"></span></div>
+      </div>
+    </section>
+
+    <section id="tab-profile" class="panel">
+      <div class="card">
+        <div class="title">プロフィール</div>
+        <input id="profileName" type="text" placeholder="例）祖父 / 祖母 / ペット / 山田太郎">
+        <div class="row"><button class="btn primary" id="btnSaveProfile">保存</button><span id="profileStatus" class="note"></span></div>
+      </div>
+    </section>
+
+    <div class="footer">デジタル仏壇アプリ プロトタイプ v11.1.1 / vA11b（超安定版）</div>
+  </div>
+</div>
+
+<script>
+(function(){
+  function byId(id){ return document.getElementById(id); }
+
+  var tabButtons = document.querySelectorAll('.tabs button');
+  var panels = {
+    altar: byId('tab-altar'),
+    memorial: byId('tab-memorial'),
+    shukatsu: byId('tab-shukatsu'),
+    profile: byId('tab-profile')
+  };
+
+  function switchTab(name){
+    for (var i=0;i<tabButtons.length;i++){
+      var b = tabButtons[i];
+      if (b.getAttribute('data-tab') === name) b.classList.add('active');
+      else b.classList.remove('active');
+    }
+    for (var key in panels){
+      if (key === name) panels[key].classList.add('active');
+      else panels[key].classList.remove('active');
+    }
+  }
+
+  for (var i=0;i<tabButtons.length;i++){
+    tabButtons[i].addEventListener('click', function(){
+      switchTab(this.getAttribute('data-tab'));
+    });
+  }
+
+  var altarStatus = byId('altarStatus');
+  var offeringList = byId('offeringList');
+  var portraitName = byId('portraitName');
+
+  function loadOfferings(){
+    var arr = JSON.parse(localStorage.getItem('altar_vA11b_offerings') || '[]');
+    offeringList.innerHTML = '';
+    for (var i=0;i<arr.length;i++){
+      var d = document.createElement('div');
+      d.className = 'pill';
+      d.textContent = arr[i];
+      offeringList.appendChild(d);
+    }
+  }
+
+  byId('btnBell').addEventListener('click', function(){
+    altarStatus.textContent = 'チーン…';
+    setTimeout(function(){ altarStatus.textContent = ''; }, 1400);
+  });
+
+  function incense(sec){
+    altarStatus.textContent = '線香をあげました（' + sec + '秒）';
+  }
+  byId('btnIncense15').addEventListener('click', function(){ incense(15); });
+  byId('btnIncense30').addEventListener('click', function(){ incense(30); });
+  byId('btnIncense60').addEventListener('click', function(){ incense(60); });
+
+  byId('btnAddOffering').addEventListener('click', function(){
+    var v = window.prompt('お供えを入力してください（例：和菓子、コーヒー、ビール）');
+    if (!v || !v.trim()) return;
+    var arr = JSON.parse(localStorage.getItem('altar_vA11b_offerings') || '[]');
+    arr.unshift(v.trim());
+    localStorage.setItem('altar_vA11b_offerings', JSON.stringify(arr.slice(0,8)));
+    loadOfferings();
+  });
+
+  var memorialFile = byId('memorialFile');
+  var memorialPreview = byId('memorialPreview');
+  var memorialGrid = byId('memorialGrid');
+  var currentDataUrl = '';
+
+  function renderMemorialGrid(){
+    var arr = JSON.parse(localStorage.getItem('altar_vA11b_memorial') || '[]');
+    memorialGrid.innerHTML = '';
+    for (var i=0;i<arr.length;i++){
+      var card = document.createElement('div');
+      card.className = 'item';
+
+      var img = document.createElement('img');
+      img.src = arr[i].dataUrl;
+      img.alt = 'memorial';
+
+      var note = document.createElement('div');
+      note.className = 'note';
+      note.style.marginTop = '6px';
+      note.textContent = arr[i].note || '';
+
+      card.appendChild(img);
+      card.appendChild(note);
+      memorialGrid.appendChild(card);
+    }
+  }
+
+  memorialFile.addEventListener('change', function(e){
+    var file = e.target.files && e.target.files[0];
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function(){
+      currentDataUrl = reader.result;
+      memorialPreview.innerHTML = '';
+      var img = document.createElement('img');
+      img.src = currentDataUrl;
+      img.alt = 'preview';
+      memorialPreview.appendChild(img);
+    };
+    reader.readAsDataURL(file);
+  });
+
+  byId('btnSaveMemorial').addEventListener('click', function(){
+    if (!currentDataUrl){
+      window.alert('先に写真を選んでください');
+      return;
+    }
+    var note = byId('memorialNote').value || '';
+    var arr = JSON.parse(localStorage.getItem('altar_vA11b_memorial') || '[]');
+    arr.unshift({ dataUrl: currentDataUrl, note: note });
+    localStorage.setItem('altar_vA11b_memorial', JSON.stringify(arr.slice(0,8)));
+    currentDataUrl = '';
+    memorialFile.value = '';
+    byId('memorialNote').value = '';
+    memorialPreview.innerHTML = '';
+    renderMemorialGrid();
+  });
+
+  var shukatsuMemo = byId('shukatsuMemo');
+  var shukatsuStatus = byId('shukatsuStatus');
+  shukatsuMemo.value = localStorage.getItem('altar_vA11b_shukatsu') || '';
+  byId('btnSaveShukatsu').addEventListener('click', function(){
+    localStorage.setItem('altar_vA11b_shukatsu', shukatsuMemo.value || '');
+    shukatsuStatus.textContent = '保存しました';
+    setTimeout(function(){ shukatsuStatus.textContent = ''; }, 1800);
+  });
+
+  var profileName = byId('profileName');
+  var profileStatus = byId('profileStatus');
+  profileName.value = localStorage.getItem('altar_vA11b_profile') || '';
+  portraitName.textContent = profileName.value || '遺影';
+  byId('btnSaveProfile').addEventListener('click', function(){
+    localStorage.setItem('altar_vA11b_profile', profileName.value || '');
+    portraitName.textContent = profileName.value || '遺影';
+    profileStatus.textContent = '保存しました';
+    setTimeout(function(){ profileStatus.textContent = ''; }, 1800);
+  });
+
+  loadOfferings();
+  renderMemorialGrid();
+})();
+</script>
+</body>
+</html>
