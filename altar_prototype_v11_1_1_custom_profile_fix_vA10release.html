@@ -980,21 +980,23 @@
   </div>
 
   <script>
-document.addEventListener("DOMContentLoaded", function(){
+document.addEventListener("DOMContentLoaded", function() {
 
   const tabs = document.querySelectorAll("[data-tab]");
   const panels = document.querySelectorAll("[data-panel]");
 
-  tabs.forEach(btn => {
-    btn.addEventListener("click", () => {
+  tabs.forEach(function(btn) {
+    btn.addEventListener("click", function() {
 
       const target = btn.getAttribute("data-tab");
 
-      tabs.forEach(b => b.classList.remove("active"));
+      tabs.forEach(function(b) {
+        b.classList.remove("active");
+      });
       btn.classList.add("active");
 
-      panels.forEach(p => {
-        if(p.getAttribute("data-panel") === target){
+      panels.forEach(function(p) {
+        if (p.getAttribute("data-panel") === target) {
           p.style.display = "block";
         } else {
           p.style.display = "none";
@@ -1005,7 +1007,6 @@ document.addEventListener("DOMContentLoaded", function(){
   });
 
 });
-    
-  </script>
+</script>
 </body>
 </html>
