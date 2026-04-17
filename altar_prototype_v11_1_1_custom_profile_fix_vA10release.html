@@ -1,135 +1,722 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>デジタル仏壇アプリ vA11 完全版</title>
-
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>デジタル仏壇アプリ・プロトタイプ vA11</title>
 <style>
-body{
-  margin:0;
-  font-family:sans-serif;
-  background:#000;
-  color:#fff;
-}
+  :root{
+    color-scheme: dark;
+    --bg:#050505;
+    --card:#121212;
+    --line:#3d3d3d;
+    --text:#f5f5f5;
+    --muted:#bcbcbc;
+    --gold1:#f4d27d;
+    --gold2:#ad8031;
+    --blue1:#a8d6ff;
+    --blue2:#4f86ff;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;
+    font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,"Yu Gothic","メイリオ",sans-serif;
+    background:radial-gradient(circle at top,#2d2d2d 0%,#000 55%);
+    color:var(--text);
+  }
+  .page{
+    max-width:560px;
+    margin:0 auto;
+    min-height:100vh;
+    padding:14px;
+  }
+  .card{
+    background:rgba(10,10,10,.96);
+    border:1px solid #3a3a3a;
+    border-radius:22px;
+    padding:14px;
+    box-shadow:0 10px 30px rgba(0,0,0,.45);
+  }
+  h1{
+    margin:0 0 6px;
+    font-size:18px;
+    line-height:1.4;
+  }
+  .sub{
+    font-size:11px;
+    color:var(--muted);
+    line-height:1.6;
+    margin-bottom:10px;
+  }
+  .people-head{
+    font-size:12px;
+    margin-top:8px;
+    color:#ddd;
+  }
+  .people-row{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+    margin-top:8px;
+    align-items:center;
+  }
+  .person-chip, .btn, .tab{
+    border-radius:999px;
+    border:1px solid #5a5a5a;
+    background:#101010;
+    color:#efefef;
+    padding:8px 12px;
+    font-size:12px;
+  }
+  .person-chip.active{
+    background:linear-gradient(135deg,var(--blue1),var(--blue2));
+    color:#07131d;
+    border-color:var(--blue1);
+    font-weight:700;
+  }
+  .btn{
+    cursor:pointer;
+  }
+  .btn.gold{
+    background:linear-gradient(135deg,var(--gold1),var(--gold2));
+    color:#211806;
+    border-color:var(--gold1);
+    font-weight:700;
+  }
+  .btn.ghost{
+    background:transparent;
+  }
+  .tabs{
+    display:flex;
+    gap:8px;
+    overflow:auto;
+    margin:14px 0;
+    padding-bottom:2px;
+  }
+  .tab{
+    white-space:nowrap;
+    cursor:pointer;
+    flex:0 0 auto;
+  }
+  .tab.active{
+    background:linear-gradient(135deg,var(--gold1),var(--gold2));
+    color:#211806;
+    border-color:var(--gold1);
+    font-weight:700;
+  }
+  .panel{display:none}
+  .panel.active{display:block}
+  .section-title{
+    margin:4px 0 10px;
+    font-size:12px;
+    color:#ccc;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+  }
+  .box{
+    background:var(--card);
+    border:1px solid #313131;
+    border-radius:14px;
+    padding:12px;
+    margin-bottom:12px;
+  }
+  .box-title{
+    font-size:13px;
+    font-weight:700;
+    margin-bottom:6px;
+  }
+  .note{
+    color:var(--muted);
+    font-size:11px;
+    line-height:1.7;
+  }
+  .portrait-layout{
+    display:flex;
+    gap:12px;
+    align-items:flex-start;
+    flex-wrap:wrap;
+  }
+  .portrait-frame{
+    width:120px;
+    min-width:120px;
+    border:3px solid rgba(255,255,255,.85);
+    border-radius:12px;
+    padding:7px;
+    background:linear-gradient(135deg,#5f5f5f,#1e1e1e);
+  }
+  .portrait-inner{
+    height:135px;
+    border-radius:8px;
+    background:#666;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    line-height:1.5;
+    padding:8px;
+    color:#f1f1f1;
+    font-size:12px;
+  }
+  .status-pill{
+    display:inline-block;
+    border-radius:999px;
+    border:1px solid #666;
+    padding:5px 10px;
+    font-size:11px;
+    margin-bottom:8px;
+  }
+  .ihai-preview{
+    margin-top:10px;
+    border:1px solid #474747;
+    border-radius:12px;
+    padding:10px;
+    background:#171717;
+    color:#f0dfb7;
+    line-height:1.8;
+    font-size:12px;
+  }
 
-.container{
-  padding:16px;
-}
+  .altar-wrap{
+    max-width:430px;
+    margin:0 auto;
+  }
+  .altar{
+    position:relative;
+    min-height:540px;
+    border-radius:18px;
+    border:1px solid #7b6337;
+    overflow:hidden;
+    background:
+      linear-gradient(to bottom, rgba(255,220,160,.04), rgba(0,0,0,.08)),
+      radial-gradient(circle at top, #4b3219 0%, #17110a 58%);
+  }
+  .altar-title{
+    position:absolute;
+    top:14px;
+    left:0;
+    right:0;
+    text-align:center;
+    color:#f4dfb1;
+    font-size:12px;
+  }
+  .door-left,.door-right{
+    position:absolute;
+    top:10%;
+    width:18%;
+    height:58%;
+    border:1px solid rgba(255,255,255,.08);
+    background:linear-gradient(to bottom, rgba(255,255,255,.03), rgba(0,0,0,.14));
+    border-radius:10px;
+  }
+  .door-left{left:3%}
+  .door-right{right:3%}
+  .inner-frame{
+    position:absolute;
+    left:22%;
+    right:22%;
+    top:9%;
+    bottom:18%;
+    border:1px solid rgba(255,233,184,.24);
+    border-radius:14px;
+  }
+  .altar-portrait{
+    position:absolute;
+    top:88px;
+    left:50%;
+    transform:translateX(-50%);
+    width:95px;
+    height:114px;
+    border-radius:10px;
+    border:2px solid rgba(255,255,255,.8);
+    background:#f2f2f2;
+    color:#181818;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    font-size:11px;
+    line-height:1.5;
+    padding:6px;
+  }
+  .shelf-mid{
+    position:absolute;
+    left:16%;
+    right:16%;
+    top:47%;
+    height:14px;
+    border-radius:10px;
+    background:linear-gradient(to bottom, rgba(255,255,255,.06), rgba(0,0,0,.62));
+  }
+  .shelf-main{
+    position:absolute;
+    left:10%;
+    right:10%;
+    bottom:88px;
+    height:22px;
+    border-radius:12px;
+    background:linear-gradient(to bottom, rgba(255,255,255,.05), rgba(0,0,0,.72));
+  }
+  .altar-base{
+    position:absolute;
+    left:0;
+    right:0;
+    bottom:0;
+    height:66px;
+    background:linear-gradient(to bottom, rgba(255,255,255,.02), rgba(0,0,0,.88));
+  }
+  .ihai{
+    position:absolute;
+    left:25%;
+    top:55%;
+    width:56px;
+    min-height:96px;
+    border-radius:4px 4px 2px 2px;
+    background:linear-gradient(to bottom,#4b301c,#20150d);
+    border:1px solid rgba(255,255,255,.24);
+    color:#f7ecd3;
+    writing-mode:vertical-rl;
+    text-orientation:mixed;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    padding:4px 2px;
+    font-size:10px;
+    line-height:1.35;
+    box-shadow:0 3px 8px rgba(0,0,0,.4);
+  }
+  .rin{
+    position:absolute;
+    left:61%;
+    top:63%;
+    width:34px;
+    height:34px;
+    border-radius:50%;
+    background:radial-gradient(circle at 35% 35%, #e7e7e7 0,#b5b5b5 38%,#5e5e5e 100%);
+    box-shadow:0 3px 8px rgba(0,0,0,.45);
+  }
+  .rin-stick{
+    position:absolute;
+    left:71%;
+    top:69%;
+    width:30px;
+    height:7px;
+    border-radius:5px;
+    background:linear-gradient(to right,#e0c993,#9f7a47);
+    box-shadow:0 2px 6px rgba(0,0,0,.35);
+  }
+  .incense-area{
+    position:absolute;
+    left:44%;
+    top:61%;
+    width:46px;
+    height:46px;
+    display:none;
+  }
+  .burner{
+    position:absolute;
+    bottom:0;
+    left:50%;
+    transform:translateX(-50%);
+    width:42px;
+    height:14px;
+    border-radius:10px;
+    background:radial-gradient(circle at top,#666,#262626 65%);
+    border:1px solid rgba(255,255,255,.15);
+  }
+  .stick{
+    position:absolute;
+    bottom:12px;
+    left:50%;
+    transform:translateX(-50%);
+    width:3px;
+    height:18px;
+    border-radius:3px;
+    background:linear-gradient(to top,#553121,#d7c08d);
+  }
+  .smoke{
+    position:absolute;
+    left:50%;
+    bottom:30px;
+    width:8px;
+    height:18px;
+    transform:translateX(-50%);
+    border-radius:50%;
+    background:radial-gradient(circle, rgba(255,255,255,.92) 0, rgba(255,255,255,0) 70%);
+    opacity:0;
+    animation:smokeRise 2.8s linear infinite;
+  }
+  .smoke.s2{animation-delay:1s}
+  .smoke.s3{animation-delay:2s}
+  @keyframes smokeRise{
+    0%{opacity:0; transform:translate(-50%,0) scale(.6)}
+    30%{opacity:.8; transform:translate(-50%,-8px) scale(.9)}
+    70%{opacity:.35; transform:translate(-50%,-16px) scale(1.1)}
+    100%{opacity:0; transform:translate(-50%,-24px) scale(1.2)}
+  }
 
-.tabs{
-  display:flex;
-  gap:8px;
-  margin:10px 0;
-}
-
-.tab{
-  padding:8px 12px;
-  border:1px solid #555;
-  border-radius:20px;
-  cursor:pointer;
-}
-
-.tab.active{
-  background:#d4af37;
-  color:#000;
-}
-
-.panel{
-  display:none;
-  margin-top:10px;
-}
-
-.panel.active{
-  display:block;
-}
-
-.button{
-  padding:10px;
-  background:#d4af37;
-  color:#000;
-  border:none;
-  border-radius:8px;
-  margin-top:10px;
-}
+  .altar-buttons{
+    display:flex;
+    gap:8px;
+    overflow:auto;
+    white-space:nowrap;
+    margin-top:10px;
+    padding-bottom:2px;
+  }
+  .offerings{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+    margin-top:8px;
+  }
+  .offer-chip{
+    border-radius:999px;
+    border:1px solid rgba(255,255,255,.16);
+    padding:6px 10px;
+    background:rgba(0,0,0,.35);
+    font-size:11px;
+  }
+  .catalog-grid{
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:10px;
+    margin-top:10px;
+  }
+  .catalog-item{
+    background:#1b1b1b;
+    border:1px solid #373737;
+    border-radius:12px;
+    padding:10px;
+  }
+  .catalog-name{
+    font-size:12px;
+    font-weight:700;
+    margin-bottom:4px;
+  }
+  .catalog-meta{
+    font-size:11px;
+    color:var(--muted);
+    line-height:1.5;
+    min-height:32px;
+  }
+  .memorial-list{
+    margin-top:8px;
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+  }
+  .memorial-item{
+    border:1px solid #383838;
+    border-radius:10px;
+    padding:8px 10px;
+    background:#171717;
+    font-size:12px;
+  }
+  input[type="text"], textarea{
+    width:100%;
+    border-radius:12px;
+    border:1px solid #555;
+    background:#0f0f0f;
+    color:#f4f4f4;
+    padding:10px;
+    font-size:12px;
+  }
+  textarea{
+    min-height:88px;
+    resize:vertical;
+  }
 </style>
 </head>
-
 <body>
+<div class="page">
+  <div class="card">
+    <h1>デジタル仏壇アプリ・プロトタイプ</h1>
+    <div class="sub">vA11 仏壇強化版。いまは動く版を土台に、仏壇タブを本物っぽくした段階です。</div>
 
-<div class="container">
+    <div class="people-head">ご供養する方：</div>
+    <div class="people-row">
+      <button class="btn" onclick="addPerson()">＋追加</button>
+      <div id="people"></div>
+    </div>
 
-<h2>デジタル仏壇アプリ・プロトタイプ</h2>
+    <div class="tabs">
+      <div class="tab active" data-tab="tab1">① 遺影・位牌</div>
+      <div class="tab" data-tab="tab2">② 仏壇・お供え</div>
+      <div class="tab" data-tab="tab3">③ メモリアル</div>
+      <div class="tab" data-tab="tab4">④ 音声</div>
+      <div class="tab" data-tab="tab5">⑤ 終活メモ</div>
+      <div class="tab" data-tab="tab6">⑥ プロフィール</div>
+    </div>
 
-<div id="profileArea">
-  <button onclick="addPerson()">＋追加</button>
-  <div id="people"></div>
-</div>
+    <div class="panel active" id="tab1">
+      <div class="section-title">Portrait & Ihai</div>
+      <div class="box">
+        <div class="portrait-layout">
+          <div class="portrait-frame">
+            <div class="portrait-inner">遺影（サンプル）<br>アプリ版で写真設定予定</div>
+          </div>
+          <div style="flex:1;min-width:180px;">
+            <div class="status-pill">未申請（サンプル）</div>
+            <div class="note">
+              ご家族・身近な方の遺影は、実際のアプリではご自身の端末から直接設定できる想定です。<br>
+              有名人との公式コラボ遺影プランでは、運営側が用意した写真のみを利用する想定です。
+            </div>
+            <div style="margin-top:10px;">
+              <button class="btn gold" onclick="setPortraitStatus('申請中（デモ）')">遺影を申請したことにする</button>
+            </div>
+          </div>
+        </div>
+        <div class="ihai-preview" id="ihaiPreview">位牌プレビュー（サンプル）</div>
+      </div>
+    </div>
 
-<div class="tabs">
-  <div class="tab active" data-tab="tab1">① 遺影・位牌</div>
-  <div class="tab" data-tab="tab2">② 仏壇</div>
-  <div class="tab" data-tab="tab3">③ メモリアル</div>
-  <div class="tab" data-tab="tab4">④ 音声</div>
-  <div class="tab" data-tab="tab5">⑤ 終活メモ</div>
-</div>
+    <div class="panel" id="tab2">
+      <div class="section-title">Altar</div>
 
-<div class="panel active" id="tab1">
-  遺影・位牌の画面
-</div>
+      <div class="altar-wrap">
+        <div class="altar">
+          <div class="altar-title">縦長仏壇（サンプル）</div>
+          <div class="door-left"></div>
+          <div class="door-right"></div>
+          <div class="inner-frame"></div>
+          <div class="altar-portrait" id="altarPortrait">遺影</div>
+          <div class="shelf-mid"></div>
+          <div class="ihai" id="altarIhai">位牌</div>
+          <div class="rin"></div>
+          <div class="rin-stick"></div>
 
-<div class="panel" id="tab2">
-  仏壇の画面
-</div>
+          <div class="incense-area" id="incenseArea">
+            <div class="burner"></div>
+            <div class="stick"></div>
+            <div class="smoke"></div>
+            <div class="smoke s2"></div>
+            <div class="smoke s3"></div>
+          </div>
 
-<div class="panel" id="tab3">
-  メモリアル（思い出）
-</div>
+          <div class="shelf-main"></div>
+          <div class="altar-base"></div>
+        </div>
 
-<div class="panel" id="tab4">
-  音声（将来）
-</div>
+        <div class="altar-buttons">
+          <button class="btn gold" onclick="ringBell()">鈴を鳴らす</button>
+          <button class="btn" onclick="offerIncense()">線香をあげる</button>
+          <button class="btn" onclick="addOffering()">お供えを追加</button>
+        </div>
+      </div>
 
-<div class="panel" id="tab5">
-  終活メモ
-</div>
+      <div class="box">
+        <div class="box-title">仏壇の状態</div>
+        <div class="note" id="altarStatus">まだお供えの記録はありません。</div>
+        <div class="offerings" id="offeringList"></div>
+      </div>
 
+      <div class="box">
+        <div class="box-title">購入カタログA（シンプル版）</div>
+        <div class="note">最初は 和菓子・飲み物・花・線香 だけを置き、あとでビールやカップ麺などに拡張する想定です。</div>
+
+        <div class="catalog-grid">
+          <div class="catalog-item">
+            <div class="catalog-name">和菓子</div>
+            <div class="catalog-meta">まんじゅう・ようかん など</div>
+            <div style="margin-top:8px;">
+              <button class="btn" onclick="quickOffer('和菓子')">お供えする</button>
+              <button class="btn gold" onclick="buyItem('和菓子')">購入する</button>
+            </div>
+          </div>
+
+          <div class="catalog-item">
+            <div class="catalog-name">飲み物</div>
+            <div class="catalog-meta">お茶・コーヒー・ジュース</div>
+            <div style="margin-top:8px;">
+              <button class="btn" onclick="quickOffer('飲み物')">お供えする</button>
+              <button class="btn gold" onclick="buyItem('飲み物')">購入する</button>
+            </div>
+          </div>
+
+          <div class="catalog-item">
+            <div class="catalog-name">花</div>
+            <div class="catalog-meta">供花・季節の花</div>
+            <div style="margin-top:8px;">
+              <button class="btn" onclick="quickOffer('花')">お供えする</button>
+              <button class="btn gold" onclick="buyItem('花')">購入する</button>
+            </div>
+          </div>
+
+          <div class="catalog-item">
+            <div class="catalog-name">線香</div>
+            <div class="catalog-meta">香りの違う線香</div>
+            <div style="margin-top:8px;">
+              <button class="btn" onclick="quickOffer('線香')">お供えする</button>
+              <button class="btn gold" onclick="buyItem('線香')">購入する</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel" id="tab3">
+      <div class="section-title">Memorial</div>
+      <div class="box">
+        <div class="box-title">メモリアル（思い出）</div>
+        <div class="note">最初の版なので、写真の代わりに「思い出メモ」を保存する形にしています。</div>
+        <div style="margin-top:10px;">
+          <input type="text" id="memorialInput" placeholder="例）2026年の正月に家族でお墓参りに行った" />
+        </div>
+        <div style="margin-top:10px;">
+          <button class="btn gold" onclick="addMemorial()">思い出を追加</button>
+        </div>
+        <div class="memorial-list" id="memorialList"></div>
+      </div>
+    </div>
+
+    <div class="panel" id="tab4">
+      <div class="section-title">Audio</div>
+      <div class="box">
+        <div class="box-title">音声（将来拡張）</div>
+        <div class="note">将来のアプリ版では、ここに「ありがとう」「見守っているよ」などの音声ボタンを置く想定です。</div>
+      </div>
+    </div>
+
+    <div class="panel" id="tab5">
+      <div class="section-title">Shukatsu Memo</div>
+      <div class="box">
+        <div class="box-title">終活メモ</div>
+        <div class="note">供養する方ごとではなく、本人用の独立したメモです。</div>
+        <div style="margin-top:10px;">
+          <textarea id="endingMemo" placeholder="好きなもの、残しておきたいメッセージ、お供えしてほしいもの など"></textarea>
+        </div>
+        <div style="margin-top:10px;">
+          <button class="btn gold" onclick="saveEndingMemo()">保存</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel" id="tab6">
+      <div class="section-title">Profile</div>
+      <div class="box">
+        <div class="box-title">プロフィール</div>
+        <div class="note">ここで入力した名前は、位牌や仏壇にも反映されます。</div>
+        <div style="margin-top:10px;">
+          <input type="text" id="profileName" placeholder="例）祖父 / 祖母 / 山田太郎" />
+        </div>
+        <div style="margin-top:10px;">
+          <button class="btn gold" onclick="saveProfile()">保存</button>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <script>
+  const memorialItems = [];
+  const offeringItems = [];
 
-// タブ切り替え（完全動作版）
-document.querySelectorAll(".tab").forEach(tab=>{
-  tab.addEventListener("click",()=>{
+  document.querySelectorAll(".tab").forEach(tab => {
+    tab.addEventListener("click", () => {
+      document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+      tab.classList.add("active");
 
-    document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
-    tab.classList.add("active");
+      const target = tab.getAttribute("data-tab");
+      document.querySelectorAll(".panel").forEach(panel => {
+        panel.classList.remove("active");
+        if (panel.id === target) {
+          panel.classList.add("active");
+        }
+      });
+    });
+  });
 
-    const target = tab.getAttribute("data-tab");
+  function addPerson(){
+    const name = prompt("名前を入力してください");
+    if(!name) return;
 
-    document.querySelectorAll(".panel").forEach(p=>{
-      p.classList.remove("active");
-      if(p.id === target){
-        p.classList.add("active");
-      }
+    const chip = document.createElement("button");
+    chip.className = "person-chip active";
+    chip.textContent = name;
+
+    document.querySelectorAll(".person-chip").forEach(c => c.classList.remove("active"));
+    chip.addEventListener("click", function(){
+      document.querySelectorAll(".person-chip").forEach(c => c.classList.remove("active"));
+      chip.classList.add("active");
+      document.getElementById("altarPortrait").textContent = name;
+      document.getElementById("altarIhai").textContent = name;
+      document.getElementById("ihaiPreview").textContent = name;
     });
 
-  });
-});
+    document.getElementById("people").appendChild(chip);
+    document.getElementById("altarPortrait").textContent = name;
+    document.getElementById("altarIhai").textContent = name;
+    document.getElementById("ihaiPreview").textContent = name;
+  }
 
-// 人物追加
-function addPerson(){
-  const name = prompt("名前を入力してください");
-  if(!name) return;
+  function setPortraitStatus(text){
+    alert(text);
+  }
 
-  const div = document.createElement("div");
-  div.textContent = name;
-  div.style.marginTop="5px";
+  function ringBell(){
+    alert("チーン");
+  }
 
-  document.getElementById("people").appendChild(div);
-}
+  function offerIncense(){
+    document.getElementById("incenseArea").style.display = "block";
+    document.getElementById("altarStatus").textContent = "線香をあげました。";
+  }
 
+  function renderOfferings(){
+    const list = document.getElementById("offeringList");
+    list.innerHTML = "";
+    offeringItems.forEach(item => {
+      const div = document.createElement("div");
+      div.className = "offer-chip";
+      div.textContent = item;
+      list.appendChild(div);
+    });
+  }
+
+  function addOffering(){
+    const item = prompt("お供えを入力してください");
+    if(!item) return;
+    offeringItems.unshift(item);
+    document.getElementById("altarStatus").textContent = "最近のお供えです。";
+    renderOfferings();
+  }
+
+  function quickOffer(name){
+    offeringItems.unshift(name);
+    document.getElementById("altarStatus").textContent = "最近のお供えです。";
+    renderOfferings();
+  }
+
+  function buyItem(name){
+    alert(name + " の購入ページへ進む想定です。");
+  }
+
+  function addMemorial(){
+    const value = document.getElementById("memorialInput").value.trim();
+    if(!value) return;
+    memorialItems.unshift(value);
+    document.getElementById("memorialInput").value = "";
+    const list = document.getElementById("memorialList");
+    list.innerHTML = "";
+    memorialItems.forEach(item => {
+      const div = document.createElement("div");
+      div.className = "memorial-item";
+      div.textContent = item;
+      list.appendChild(div);
+    });
+  }
+
+  function saveEndingMemo(){
+    alert("終活メモを保存しました");
+  }
+
+  function saveProfile(){
+    const name = document.getElementById("profileName").value.trim();
+    if(!name) return;
+    document.getElementById("altarPortrait").textContent = name;
+    document.getElementById("altarIhai").textContent = name;
+    document.getElementById("ihaiPreview").textContent = name;
+    alert("プロフィールを保存しました");
+  }
 </script>
-
 </body>
 </html>
