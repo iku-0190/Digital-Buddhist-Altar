@@ -2,6 +2,9 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8" />
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+<meta http-equiv="Pragma" content="no-cache" />
+<meta http-equiv="Expires" content="0" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <title>デジタル仏壇</title>
 <style>
@@ -458,11 +461,31 @@
 </style>
 </head>
 <body>
+<script>
+(function(){
+  const VERSION = "20260830b";
+  const url = new URL(window.location.href);
+
+  // 短い正式URLや古い版で開いた場合は、最新版URLへ一度だけ切り替える
+  if(url.searchParams.get("appv") !== VERSION){
+    url.searchParams.set("appv", VERSION);
+    window.location.replace(url.toString());
+    return;
+  }
+
+  // 最新版として読み込めた後は、アドレス表示だけ短い正式URLに戻す
+  window.addEventListener("DOMContentLoaded", function(){
+    try{
+      history.replaceState(null, "", window.location.pathname);
+    }catch(e){}
+  });
+})();
+</script>
 <div class="page">
   <div class="card">
     <h1>デジタル仏壇</h1>
     <div class="sub">大切な方をいつでも身近に想い、手を合わせられるデジタル供養アプリです。</div>
-    <div class="note" style="margin-top:4px;">保存対応正式版</div>
+    <div class="note" style="margin-top:4px;">保存対応正式版・キャッシュ対策済み</div>
 
     <div class="people-head">ご供養する方：</div>
     <div class="people-row">
