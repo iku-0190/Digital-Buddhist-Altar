@@ -485,7 +485,7 @@
   <div class="card">
     <h1>デジタル仏壇</h1>
     <div class="sub">大切な方をいつでも身近に想い、手を合わせられるデジタル供養アプリです。</div>
-    <div class="note" style="margin-top:4px;">保存対応正式版・キャッシュ対策済み</div>
+    <div class="note" style="margin-top:4px;">保存対応正式版・キャッシュ対策済み・初期化対応</div>
 
     <div class="people-head">ご供養する方：</div>
     <div class="people-row">
@@ -661,7 +661,14 @@
       </div>
     </div>
 
-    <div class="legal-wrap">
+    
+    <div class="box" style="margin-top:14px;">
+      <div class="box-title">データ管理</div>
+      <div class="note">この端末に保存されている登録内容をすべて初期化できます。</div>
+      <button class="btn" style="margin-top:10px;" onclick="resetAllData()">すべてのデータを初期化</button>
+    </div>
+
+<div class="legal-wrap">
       <div class="note">ご利用前に以下をご確認ください。</div>
 
       <details>
@@ -1041,6 +1048,23 @@
     document.getElementById("ihaiPreview").textContent = name;
     saveAppState();
     alert("プロフィールを保存しました");
+  }
+
+
+  function resetAllData(){
+    const ok = confirm("この端末に保存されている人物・プロフィール・メモリアル・お供え・終活メモ等をすべて削除します。よろしいですか？");
+    if(!ok) return;
+
+    try{
+      localStorage.removeItem(STORAGE_KEY);
+    }catch(e){}
+
+    Object.keys(incenseTimersByPerson).forEach(key => {
+      try{ clearTimeout(incenseTimersByPerson[key]); }catch(e){}
+    });
+
+    alert("保存データを初期化しました。");
+    window.location.reload();
   }
 
   restoreAppState();
