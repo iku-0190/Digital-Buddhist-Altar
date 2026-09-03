@@ -160,6 +160,15 @@
     color:#f1f1f1;
     font-size:12px;
   }
+
+  .portrait-inner img,
+  .altar-portrait img{
+    width:100%;
+    height:100%;
+    display:block;
+    object-fit:cover;
+    border-radius:inherit;
+  }
   .status-pill{
     display:inline-block;
     border-radius:999px;
@@ -507,16 +516,17 @@
       <div class="box">
         <div class="portrait-layout">
           <div class="portrait-frame">
-            <div class="portrait-inner">遺影（サンプル）<br>アプリ版で写真設定予定</div>
+            <div class="portrait-inner" id="portraitPreview">遺影を選択してください</div>
           </div>
           <div style="flex:1;min-width:180px;">
-            <div class="status-pill">未申請（サンプル）</div>
+            <div class="status-pill">人物ごとに保存</div>
             <div class="note">
-              ご家族・身近な方の遺影は、実際のアプリではご自身の端末から直接設定できる想定です。<br>
-              有名人との公式コラボ遺影プランでは、運営側が用意した写真のみを利用する想定です。
+              iPhoneの写真から遺影を選べます。選んだ写真は、この端末のブラウザ内に人物ごとに保存され、仏壇にも反映されます。
             </div>
-            <div style="margin-top:10px;">
-              <button class="btn gold" onclick="setPortraitStatus('申請中（デモ）')">遺影を申請したことにする</button>
+            <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
+              <button class="btn gold" onclick="choosePortrait()">遺影を選ぶ</button>
+              <button class="btn ghost" onclick="removePortrait()">遺影を削除</button>
+              <input id="portraitFileInput" type="file" accept="image/*" style="display:none" onchange="handlePortraitFile(event)" />
             </div>
           </div>
         </div>
@@ -726,6 +736,7 @@
   const memorialItemsByPerson = {};
   const profileNamesByPerson = {};
   const offeringItemsByPerson = {};
+  const portraitImagesByPerson = {};
   const incenseEndsAtByPerson = {};
   const incenseTimersByPerson = {};
   let personKeys = [];
@@ -737,6 +748,7 @@
     if(!memorialItemsByPerson[key]) memorialItemsByPerson[key] = [];
     if(!(key in profileNamesByPerson)) profileNamesByPerson[key] = "";
     if(!offeringItemsByPerson[key]) offeringItemsByPerson[key] = [];
+    if(!(key in portraitImagesByPerson)) portraitImagesByPerson[key] = "";
     if(!(key in incenseEndsAtByPerson)) incenseEndsAtByPerson[key] = 0;
   }
 
@@ -747,6 +759,7 @@
       memorialItemsByPerson,
       profileNamesByPerson,
       offeringItemsByPerson,
+      portraitImagesByPerson,
       incenseEndsAtByPerson,
       endingMemoValue
     };
@@ -771,6 +784,7 @@
       Object.assign(memorialItemsByPerson, data.memorialItemsByPerson || {});
       Object.assign(profileNamesByPerson, data.profileNamesByPerson || {});
       Object.assign(offeringItemsByPerson, data.offeringItemsByPerson || {});
+      Object.assign(portraitImagesByPerson, data.portraitImagesByPerson || {});
       Object.assign(incenseEndsAtByPerson, data.incenseEndsAtByPerson || {});
 
       document.getElementById("endingMemo").value = endingMemoValue;
@@ -843,12 +857,119 @@
     });
   }
 
+  function renderPortrait(){
+    const preview = document.getElementById("portraitPreview");
+    const altarPortrait = document.getElementById("altarPortrait");
+
+    if(!activePersonKey){
+      preview.textContent = "遺影を選択してください";
+      altarPortrait.textContent = "遺影";
+      return;
+    }
+
+    ensurePersonState(activePersonKey);
+    const photo = portraitImagesByPerson[activePersonKey];
+
+    if(photo){
+      preview.innerHTML = "";
+      const img1 = document.createElement("img");
+      img1.src = photo;
+      img1.alt = "遺影";
+      preview.appendChild(img1);
+
+      altarPortrait.innerHTML = "";
+      const img2 = document.createElement("img");
+      img2.src = photo;
+      img2.alt = "遺影";
+      altarPortrait.appendChild(img2);
+    }else{
+      preview.textContent = "遺影を選択してください";
+      altarPortrait.textContent = getDisplayName(activePersonKey) || "遺影";
+    }
+  }
+
+  function choosePortrait(){
+    if(!activePersonKey){
+      alert("先に「ご供養する方」を追加・選択してください");
+      return;
+    }
+    document.getElementById("portraitFileInput").click();
+  }
+
+  function handlePortraitFile(event){
+    if(!activePersonKey) return;
+
+    const file = event.target.files && event.target.files[0];
+    if(!file) return;
+
+    if(!file.type.startsWith("image/")){
+      alert("画像ファイルを選んでください");
+      event.target.value = "";
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = function(e){
+      const img = new Image();
+      img.onload = function(){
+        const maxW = 420;
+        const maxH = 560;
+        let w = img.width;
+        let h = img.height;
+        const scale = Math.min(1, maxW / w, maxH / h);
+        w = Math.max(1, Math.round(w * scale));
+        h = Math.max(1, Math.round(h * scale));
+
+        const canvas = document.createElement("canvas");
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, w, h);
+
+        const dataUrl = canvas.toDataURL("image/jpeg", 0.78);
+        portraitImagesByPerson[activePersonKey] = dataUrl;
+        saveAppState();
+        renderPortrait();
+        alert("遺影を保存しました");
+      };
+      img.onerror = function(){
+        alert("写真を読み込めませんでした");
+      };
+      img.src = e.target.result;
+    };
+    reader.onerror = function(){
+      alert("写真を読み込めませんでした");
+    };
+    reader.readAsDataURL(file);
+
+    event.target.value = "";
+  }
+
+  function removePortrait(){
+    if(!activePersonKey){
+      alert("先に「ご供養する方」を追加・選択してください");
+      return;
+    }
+
+    ensurePersonState(activePersonKey);
+    if(!portraitImagesByPerson[activePersonKey]){
+      alert("削除する遺影はありません");
+      return;
+    }
+
+    if(!confirm("この方の遺影を削除しますか？")) return;
+
+    portraitImagesByPerson[activePersonKey] = "";
+    saveAppState();
+    renderPortrait();
+  }
+
   function loadPersonState(){
     if(!activePersonKey) return;
     ensurePersonState(activePersonKey);
 
     const displayName = getDisplayName(activePersonKey);
-    document.getElementById("altarPortrait").textContent = displayName;
+    renderPortrait();
     document.getElementById("altarIhai").textContent = displayName;
     document.getElementById("ihaiPreview").textContent = displayName;
     document.getElementById("profileName").value = profileNamesByPerson[activePersonKey];
@@ -1043,7 +1164,7 @@
 
     ensurePersonState(activePersonKey);
     profileNamesByPerson[activePersonKey] = name;
-    document.getElementById("altarPortrait").textContent = name;
+    renderPortrait();
     document.getElementById("altarIhai").textContent = name;
     document.getElementById("ihaiPreview").textContent = name;
     saveAppState();
@@ -1052,7 +1173,7 @@
 
 
   function resetAllData(){
-    const ok = confirm("この端末に保存されている人物・プロフィール・メモリアル・お供え・終活メモ等をすべて削除します。よろしいですか？");
+    const ok = confirm("この端末に保存されている人物・遺影・プロフィール・メモリアル・お供え・終活メモ等をすべて削除します。よろしいですか？");
     if(!ok) return;
 
     try{
