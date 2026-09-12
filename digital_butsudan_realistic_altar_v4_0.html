@@ -1,0 +1,2144 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+<meta http-equiv="Pragma" content="no-cache" />
+<meta http-equiv="Expires" content="0" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>デジタル仏壇</title>
+<style>
+  :root{
+    color-scheme: dark;
+    --bg:#050505;
+    --card:#121212;
+    --line:#3d3d3d;
+    --text:#f5f5f5;
+    --muted:#bcbcbc;
+    --gold1:#f4d27d;
+    --gold2:#ad8031;
+    --blue1:#a8d6ff;
+    --blue2:#4f86ff;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;
+    font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,"Yu Gothic","メイリオ",sans-serif;
+    background:radial-gradient(circle at top,#2d2d2d 0%,#000 55%);
+    color:var(--text);
+  }
+  .page{
+    max-width:560px;
+    margin:0 auto;
+    min-height:100vh;
+    padding:14px;
+  }
+  .card{
+    background:rgba(10,10,10,.96);
+    border:1px solid #3a3a3a;
+    border-radius:22px;
+    padding:14px;
+    box-shadow:0 10px 30px rgba(0,0,0,.45);
+  }
+  h1{
+    margin:0 0 6px;
+    font-size:18px;
+    line-height:1.4;
+  }
+  .sub{
+    font-size:11px;
+    color:var(--muted);
+    line-height:1.6;
+    margin-bottom:10px;
+  }
+  .people-head{
+    font-size:12px;
+    margin-top:8px;
+    color:#ddd;
+  }
+  .people-row{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+    margin-top:8px;
+    align-items:center;
+  }
+  .person-chip, .btn, .tab{
+    border-radius:999px;
+    border:1px solid #5a5a5a;
+    background:#101010;
+    color:#efefef;
+    padding:8px 12px;
+    font-size:12px;
+  }
+  .person-chip.active{
+    background:linear-gradient(135deg,var(--blue1),var(--blue2));
+    color:#07131d;
+    border-color:var(--blue1);
+    font-weight:700;
+  }
+  .btn{
+    cursor:pointer;
+  }
+  .btn.gold{
+    background:linear-gradient(135deg,var(--gold1),var(--gold2));
+    color:#211806;
+    border-color:var(--gold1);
+    font-weight:700;
+  }
+  .btn.ghost{
+    background:transparent;
+  }
+  .tabs{
+    display:flex;
+    gap:8px;
+    overflow:auto;
+    margin:14px 0;
+    padding-bottom:2px;
+  }
+  .tab{
+    white-space:nowrap;
+    cursor:pointer;
+    flex:0 0 auto;
+  }
+  .tab.active{
+    background:linear-gradient(135deg,var(--gold1),var(--gold2));
+    color:#211806;
+    border-color:var(--gold1);
+    font-weight:700;
+  }
+  .panel{display:none}
+  .panel.active{display:block}
+  .section-title{
+    margin:4px 0 10px;
+    font-size:12px;
+    color:#ccc;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+  }
+  .box{
+    background:var(--card);
+    border:1px solid #313131;
+    border-radius:14px;
+    padding:12px;
+    margin-bottom:12px;
+  }
+  .box-title{
+    font-size:13px;
+    font-weight:700;
+    margin-bottom:6px;
+  }
+  .note{
+    color:var(--muted);
+    font-size:11px;
+    line-height:1.7;
+  }
+  .portrait-layout{
+    display:flex;
+    gap:12px;
+    align-items:flex-start;
+    flex-wrap:wrap;
+  }
+  .portrait-frame{
+    width:120px;
+    min-width:120px;
+    border:3px solid rgba(255,255,255,.85);
+    border-radius:12px;
+    padding:7px;
+    background:linear-gradient(135deg,#5f5f5f,#1e1e1e);
+  }
+  .portrait-inner{
+    height:135px;
+    border-radius:8px;
+    background:#666;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    line-height:1.5;
+    padding:8px;
+    color:#f1f1f1;
+    font-size:12px;
+  }
+
+  .portrait-inner img,
+  .altar-portrait img{
+    width:100%;
+    height:100%;
+    display:block;
+    object-fit:cover;
+    border-radius:inherit;
+  }
+  .status-pill{
+    display:inline-block;
+    border-radius:999px;
+    border:1px solid #666;
+    padding:5px 10px;
+    font-size:11px;
+    margin-bottom:8px;
+  }
+  .ihai-preview{
+    margin-top:10px;
+    border:1px solid #474747;
+    border-radius:12px;
+    padding:10px;
+    background:#171717;
+    color:#f0dfb7;
+    line-height:1.8;
+    font-size:12px;
+  }
+
+  .altar-wrap{
+    max-width:430px;
+    margin:0 auto;
+  }
+  .altar{
+    position:relative;
+    min-height:560px;
+    border-radius:20px;
+    border:1px solid #8e6a2d;
+    overflow:hidden;
+    background:
+      linear-gradient(180deg, rgba(255,236,200,.10), rgba(0,0,0,.08) 18%, rgba(0,0,0,.22) 100%),
+      linear-gradient(90deg, #2b180b 0%, #5b361b 14%, #7a4a23 32%, #603718 50%, #7a4a23 68%, #5b361b 86%, #2b180b 100%);
+    box-shadow:
+      inset 0 0 0 2px rgba(255,223,154,.10),
+      inset 0 0 40px rgba(0,0,0,.45),
+      0 10px 28px rgba(0,0,0,.35);
+  }
+  .altar-title{
+    position:absolute;
+    top:14px;
+    left:0;
+    right:0;
+    text-align:center;
+    color:#f6df9f;
+    font-size:12px;
+    letter-spacing:.12em;
+    text-shadow:0 1px 2px rgba(0,0,0,.65);
+    z-index:4;
+  }
+  .door-left,.door-right{
+    position:absolute;
+    top:9.5%;
+    width:18%;
+    height:60%;
+    border:1px solid rgba(255,232,178,.12);
+    background:
+      linear-gradient(90deg, rgba(255,255,255,.05), rgba(0,0,0,.18)),
+      linear-gradient(180deg, rgba(255,240,210,.05), rgba(0,0,0,.18)),
+      linear-gradient(90deg, #4a2c15 0%, #6f431e 35%, #5d3415 65%, #3d220f 100%);
+    border-radius:12px;
+    box-shadow:
+      inset 0 0 0 2px rgba(255,221,148,.06),
+      inset 0 0 18px rgba(0,0,0,.25);
+  }
+  .door-left{left:3%}
+  .door-right{right:3%}
+  .inner-frame{
+    position:absolute;
+    left:22%;
+    right:22%;
+    top:9%;
+    bottom:18%;
+    border:1px solid rgba(255,224,154,.35);
+    border-radius:16px;
+    background:
+      linear-gradient(180deg, rgba(255,230,176,.06), rgba(0,0,0,0) 18%),
+      linear-gradient(90deg, rgba(255,219,122,.06), rgba(0,0,0,0) 12%, rgba(0,0,0,0) 88%, rgba(255,219,122,.06));
+    box-shadow:
+      inset 0 0 0 2px rgba(255,226,160,.08),
+      inset 0 0 28px rgba(0,0,0,.28);
+  }
+  .altar-portrait{
+    position:absolute;
+    top:118px;
+    left:50%;
+    transform:translateX(-50%);
+    width:104px;
+    height:126px;
+    border-radius:10px;
+    border:3px solid rgba(255,255,255,.84);
+    background:#f2f2f2;
+    color:#181818;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    font-size:11px;
+    line-height:1.5;
+    padding:6px;
+    box-shadow:
+      0 5px 12px rgba(0,0,0,.35),
+      0 0 0 3px rgba(80,45,18,.55);
+    z-index:4;
+  }
+  .shelf-mid{
+    position:absolute;
+    left:14%;
+    right:14%;
+    top:49%;
+    height:16px;
+    border-radius:10px;
+    background:
+      linear-gradient(180deg, rgba(255,232,178,.20), rgba(0,0,0,.18) 38%, rgba(0,0,0,.55) 100%),
+      linear-gradient(90deg, #5a3417, #7d4820 40%, #6a3d19 60%, #4d2b13);
+    box-shadow:0 5px 8px rgba(0,0,0,.22);
+  }
+  .shelf-main{
+    position:absolute;
+    left:8%;
+    right:8%;
+    bottom:92px;
+    height:24px;
+    border-radius:12px;
+    background:
+      linear-gradient(180deg, rgba(255,233,181,.18), rgba(0,0,0,.20) 34%, rgba(0,0,0,.62) 100%),
+      linear-gradient(90deg, #643917, #8b5226 40%, #75431f 60%, #573114);
+    box-shadow:0 6px 10px rgba(0,0,0,.28);
+  }
+  .altar-base{
+    position:absolute;
+    left:0;
+    right:0;
+    bottom:0;
+    height:74px;
+    background:
+      linear-gradient(180deg, rgba(255,233,181,.08), rgba(0,0,0,.25) 28%, rgba(0,0,0,.90) 100%),
+      linear-gradient(90deg, #3b220f 0%, #6e401d 18%, #8a5428 50%, #6e401d 82%, #3b220f 100%);
+    box-shadow:inset 0 10px 18px rgba(255,255,255,.03);
+  }
+  .ihai{
+    position:absolute;
+    left:23%;
+    top:56%;
+    width:70px;
+    min-height:114px;
+    border-radius:8px 8px 3px 3px;
+    background:
+      linear-gradient(180deg, rgba(255,220,150,.10), rgba(0,0,0,0) 15%),
+      linear-gradient(to bottom,#5e391d,#26160c);
+    border:1px solid rgba(255,238,205,.30);
+    color:#f7ecd3;
+    writing-mode:horizontal-tb;
+    display:flex;
+    flex-direction:row-reverse;
+    justify-content:center;
+    align-items:center;
+    gap:3px;
+    padding:8px 4px 6px;
+    font-size:10px;
+    line-height:1.35;
+    box-shadow:
+      0 4px 10px rgba(0,0,0,.40),
+      inset 0 0 0 1px rgba(255,224,160,.10);
+    z-index:4;
+  }
+  .ihai-name-col{
+    writing-mode:vertical-rl;
+    text-orientation:mixed;
+    white-space:nowrap;
+  }
+  .ihai-edit-grid{
+    display:grid;
+    gap:8px;
+    margin-top:10px;
+  }
+  .rin{
+    position:absolute;
+    left:62%;
+    top:64%;
+    width:40px;
+    height:40px;
+    border-radius:50%;
+    background:radial-gradient(circle at 35% 35%, #e6d8aa 0,#b9974c 35%,#6b4a1d 72%,#3a260f 100%);
+    box-shadow:0 4px 10px rgba(0,0,0,.45);
+    z-index:4;
+  }
+  .rin-stick{
+    position:absolute;
+    left:71%;
+    top:70%;
+    width:36px;
+    height:8px;
+    border-radius:6px;
+    background:linear-gradient(to right,#e7d3a5,#a97e45);
+    box-shadow:0 2px 6px rgba(0,0,0,.35);
+    z-index:4;
+  }
+  .incense-area{
+    position:absolute;
+    left:44%;
+    top:61%;
+    width:46px;
+    height:46px;
+    display:none;
+  }
+  .burner{
+    position:absolute;
+    bottom:0;
+    left:50%;
+    transform:translateX(-50%);
+    width:42px;
+    height:14px;
+    border-radius:10px;
+    background:radial-gradient(circle at top,#666,#262626 65%);
+    border:1px solid rgba(255,255,255,.15);
+  }
+  .stick{
+    position:absolute;
+    bottom:12px;
+    left:50%;
+    transform:translateX(-50%);
+    width:3px;
+    height:18px;
+    border-radius:3px;
+    background:linear-gradient(to top,#553121,#d7c08d);
+  }
+  .smoke{
+    position:absolute;
+    left:50%;
+    bottom:30px;
+    width:8px;
+    height:18px;
+    transform:translateX(-50%);
+    border-radius:50%;
+    background:radial-gradient(circle, rgba(255,255,255,.92) 0, rgba(255,255,255,0) 70%);
+    opacity:0;
+    animation:smokeRise 2.8s linear infinite;
+  }
+  .smoke.s2{animation-delay:1s}
+  .smoke.s3{animation-delay:2s}
+  @keyframes smokeRise{
+    0%{opacity:0; transform:translate(-50%,0) scale(.6)}
+    30%{opacity:.8; transform:translate(-50%,-8px) scale(.9)}
+    70%{opacity:.35; transform:translate(-50%,-16px) scale(1.1)}
+    100%{opacity:0; transform:translate(-50%,-24px) scale(1.2)}
+  }
+
+  .altar-buttons{
+    display:flex;
+    gap:8px;
+    overflow:auto;
+    white-space:nowrap;
+    margin-top:10px;
+    padding-bottom:2px;
+  }
+  .offerings{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+    margin-top:8px;
+  }
+  .offer-chip{
+    border-radius:999px;
+    border:1px solid rgba(255,255,255,.16);
+    padding:6px 10px;
+    background:rgba(0,0,0,.35);
+    font-size:11px;
+  }
+  .catalog-grid{
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:10px;
+    margin-top:10px;
+  }
+  .catalog-item{
+    background:#1b1b1b;
+    border:1px solid #373737;
+    border-radius:12px;
+    padding:10px;
+  }
+  .catalog-name{
+    font-size:12px;
+    font-weight:700;
+    margin-bottom:4px;
+  }
+  .catalog-meta{
+    font-size:11px;
+    color:var(--muted);
+    line-height:1.5;
+    min-height:32px;
+  }
+  .memorial-list{
+    margin-top:8px;
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+  }
+  .memorial-item{
+    border:1px solid #383838;
+    border-radius:10px;
+    padding:8px 10px;
+    background:#171717;
+    font-size:12px;
+  }
+  input[type="text"], textarea{
+    width:100%;
+    border-radius:12px;
+    border:1px solid #555;
+    background:#0f0f0f;
+    color:#f4f4f4;
+    padding:10px;
+    font-size:12px;
+  }
+  textarea{
+    min-height:88px;
+    resize:vertical;
+  }
+
+  .legal-wrap{
+    margin-top:16px;
+    border-top:1px solid #303030;
+    padding-top:12px;
+  }
+  .legal-wrap details{
+    background:#111;
+    border:1px solid #333;
+    border-radius:12px;
+    margin-top:8px;
+    padding:10px 12px;
+  }
+  .legal-wrap summary{
+    cursor:pointer;
+    font-size:12px;
+    font-weight:700;
+    color:#f0dfb7;
+  }
+  .legal-text{
+    margin-top:10px;
+    font-size:11px;
+    line-height:1.8;
+    color:#c9c9c9;
+  }
+  .legal-text h3{
+    margin:12px 0 4px;
+    font-size:12px;
+    color:#eee;
+  }
+
+
+  .altar-offering{
+    position:absolute;
+    z-index:6;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    pointer-events:auto;
+    touch-action:none;
+    user-select:none;
+    -webkit-user-select:none;
+    cursor:grab;
+    filter:drop-shadow(0 4px 5px rgba(0,0,0,.45));
+  }
+  .altar-offering.dragging{
+    cursor:grabbing;
+    transform:none !important;
+    z-index:20;
+  }
+  .altar-offering.selected,
+  .flower-in-vase.selected{
+    outline:none;
+  }
+  .altar-offering .emoji{font-size:46px;line-height:1;}
+  .altar-offering .label{
+    margin-top:4px;font-size:10px;color:#f5ead7;
+    text-shadow:0 1px 2px #000;white-space:nowrap;
+  }
+  .altar-offering-inner{
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+  }
+  .offering-beer{left:10%;bottom:7%;width:76px;min-height:76px;}
+  .offering-snack{left:50%;transform:translateX(-50%);bottom:6%;width:108px;min-height:76px;}
+  .offering-flower-left{left:2%;bottom:10%;width:82px;min-height:108px;}
+  .offering-flower-right{right:2%;bottom:10%;width:82px;min-height:108px;}
+
+
+  .offering-tea,.offering-coffee,.offering-juice,.offering-fruit,
+  .offering-wagashi,.offering-cake,.offering-cupnoodle,.offering-incense-item{
+    width:82px;
+    min-height:76px;
+  }
+
+
+  .flower-vase-fixed{
+    position:absolute;
+    z-index:5;
+    width:58px;
+    height:78px;
+    pointer-events:none;
+  }
+  .flower-vase-fixed.left{
+    left:6%;
+    bottom:4%;
+  }
+  .flower-vase-fixed.right{
+    right:6%;
+    bottom:4%;
+  }
+  .flower-vase-shape{
+    position:absolute;
+    left:50%;
+    bottom:0;
+    transform:translateX(-50%);
+    width:34px;
+    height:46px;
+    border-radius:10px 10px 16px 16px / 7px 7px 18px 18px;
+    background:
+      radial-gradient(circle at 38% 28%, rgba(255,255,255,.20) 0 5%, transparent 6%),
+      linear-gradient(90deg,#171717 0%,#343434 45%,#111 100%);
+    border:1px solid rgba(255,255,255,.18);
+    box-shadow:
+      inset 0 0 0 2px rgba(255,255,255,.03),
+      0 4px 7px rgba(0,0,0,.55);
+  }
+  .flower-vase-shape::before{
+    content:"";
+    position:absolute;
+    left:50%;
+    top:-6px;
+    transform:translateX(-50%);
+    width:26px;
+    height:9px;
+    border-radius:50%;
+    background:#0d0d0d;
+    border:1px solid rgba(255,255,255,.18);
+  }
+  .flower-vase-shape::after{
+    content:"";
+    position:absolute;
+    left:50%;
+    bottom:-5px;
+    transform:translateX(-50%);
+    width:42px;
+    height:8px;
+    border-radius:50%;
+    background:#121212;
+    border:1px solid rgba(255,255,255,.12);
+  }
+
+
+
+  /* 花は花立ての真上に固定して、まっすぐ挿したように表示 */
+  .flower-in-vase{
+    position:absolute;
+    z-index:7;
+    width:86px;
+    height:128px;
+    display:none;
+    align-items:flex-end;
+    justify-content:center;
+    text-align:center;
+    pointer-events:auto;
+    user-select:none;
+    -webkit-user-select:none;
+    cursor:pointer;
+    filter:drop-shadow(0 4px 5px rgba(0,0,0,.45));
+  }
+  .flower-in-vase.left{
+    left:calc(6% - 14px);
+    bottom:8%;
+  }
+  .flower-in-vase.right{
+    right:calc(6% - 14px);
+    bottom:8%;
+  }
+  .flower-in-vase .label{display:none;}
+
+  .bukka-arrangement{
+    position:relative;
+    width:78px;
+    height:118px;
+    transform:none !important;
+  }
+  .bukka-stem{
+    position:absolute;
+    left:50%;
+    bottom:0;
+    width:5px;
+    height:72px;
+    transform:translateX(-50%);
+    border-radius:4px;
+    background:linear-gradient(#507b35,#1e4b21);
+  }
+  .bukka-stem::before,
+  .bukka-stem::after{
+    content:"";
+    position:absolute;
+    width:30px;
+    height:13px;
+    background:#2f6b2d;
+    border-radius:100% 0 100% 0;
+    top:37px;
+  }
+  .bukka-stem::before{
+    right:2px;
+    transform:rotate(-28deg);
+    transform-origin:right center;
+  }
+  .bukka-stem::after{
+    left:2px;
+    transform:scaleX(-1) rotate(-28deg);
+    transform-origin:left center;
+  }
+  .bukka-flower{
+    position:absolute;
+    line-height:1;
+    filter:drop-shadow(0 1px 1px rgba(0,0,0,.2));
+  }
+  .bukka-f1{font-size:35px;left:22px;top:2px;}
+  .bukka-f2{font-size:30px;left:3px;top:25px;}
+  .bukka-f3{font-size:31px;right:2px;top:27px;}
+  .bukka-f4{font-size:26px;left:25px;top:39px;}
+  .bukka-f5{font-size:22px;left:8px;top:52px;}
+  .bukka-f6{font-size:22px;right:8px;top:53px;}
+
+  .flower-in-vase.selected{outline:none;}
+
+
+  .altar-top-ornament{
+    position:absolute;
+    top:38px;
+    left:18%;
+    right:18%;
+    height:18px;
+    border-radius:12px 12px 8px 8px;
+    background:linear-gradient(180deg,#d1a752,#7d5320);
+    box-shadow:0 3px 8px rgba(0,0,0,.25), inset 0 0 0 1px rgba(255,240,205,.20);
+    z-index:2;
+  }
+  .altar-side-column{
+    position:absolute;
+    top:16%;
+    bottom:14%;
+    width:10px;
+    border-radius:8px;
+    background:linear-gradient(180deg,#8f5a2a,#4a2a11 48%, #724220 100%);
+    box-shadow:inset 0 0 0 1px rgba(255,228,171,.08);
+    z-index:1;
+  }
+  .altar-side-column.left{ left:20%; }
+  .altar-side-column.right{ right:20%; }
+
+  .gohonzon-panel{
+    position:absolute;
+    top:78px;
+    left:50%;
+    transform:translateX(-50%);
+    width:96px;
+    height:68px;
+    border-radius:14px 14px 10px 10px;
+    background:
+      radial-gradient(circle at 50% 28%, rgba(255,251,217,.62), rgba(255,251,217,0) 38%),
+      linear-gradient(180deg, #6f451d 0%, #251308 100%);
+    border:1px solid rgba(255,229,166,.30);
+    box-shadow:
+      inset 0 0 0 2px rgba(255,223,150,.09),
+      0 4px 12px rgba(0,0,0,.25);
+    z-index:2;
+  }
+  .gohonzon-lotus{
+    position:absolute;
+    left:50%;
+    bottom:10px;
+    transform:translateX(-50%);
+    width:54px;
+    height:16px;
+    border-radius:50%;
+    background:radial-gradient(circle at center, rgba(255,230,160,.75), rgba(196,137,51,.85) 62%, rgba(117,70,18,.95) 100%);
+    z-index:1;
+  }
+  .gohonzon-halo{
+    position:absolute;
+    left:50%;
+    top:11px;
+    transform:translateX(-50%);
+    width:42px;
+    height:42px;
+    border-radius:50%;
+    background:radial-gradient(circle, rgba(255,243,181,.92) 0%, rgba(255,215,100,.62) 36%, rgba(255,215,100,0) 70%);
+    opacity:.88;
+  }
+  .gohonzon-body{
+    position:absolute;
+    left:50%;
+    top:18px;
+    transform:translateX(-50%);
+    width:18px;
+    height:24px;
+    border-radius:50% 50% 38% 38% / 46% 46% 54% 54%;
+    background:linear-gradient(180deg,#f6d788,#9f722e);
+    box-shadow:0 0 6px rgba(255,221,130,.28);
+  }
+  .gohonzon-body::before{
+    content:"";
+    position:absolute;
+    left:50%;
+    top:-8px;
+    transform:translateX(-50%);
+    width:12px;
+    height:12px;
+    border-radius:50%;
+    background:linear-gradient(180deg,#f7e4b0,#a57933);
+  }
+  .scroll{
+    position:absolute;
+    top:94px;
+    width:56px;
+    height:110px;
+    border-radius:9px;
+    background:
+      linear-gradient(180deg, #9d742f 0 6px, #e8d8b3 6px calc(100% - 6px), #8d6323 calc(100% - 6px) 100%);
+    box-shadow:0 4px 10px rgba(0,0,0,.22);
+    z-index:2;
+  }
+  .scroll.left{ left:23%; transform:translateX(-72%); }
+  .scroll.right{ right:23%; transform:translateX(72%); }
+  .scroll::before{
+    content:"";
+    position:absolute;
+    left:50%;
+    top:20px;
+    transform:translateX(-50%);
+    width:2px;
+    height:58px;
+    background:linear-gradient(180deg,#907042,#5e461f);
+    box-shadow:
+      -10px 6px 0 0 rgba(176,149,95,.72),
+      10px 18px 0 0 rgba(176,149,95,.62),
+      0 30px 0 0 rgba(176,149,95,.55);
+  }
+  .scroll::after{
+    content:"";
+    position:absolute;
+    left:50%;
+    bottom:-6px;
+    transform:translateX(-50%);
+    width:18px;
+    height:10px;
+    border-radius:50%;
+    background:linear-gradient(180deg,#c8a15a,#7c5721);
+  }
+  .altar-front-rail{
+    position:absolute;
+    left:10%;
+    right:10%;
+    bottom:76px;
+    height:8px;
+    border-radius:8px;
+    background:linear-gradient(180deg,#c59d52,#72471a);
+    opacity:.9;
+    z-index:3;
+  }
+
+</style>
+</head>
+<body>
+<script>
+(function(){
+  const VERSION = "20260830b";
+  const url = new URL(window.location.href);
+
+  // 短い正式URLや古い版で開いた場合は、最新版URLへ一度だけ切り替える
+  if(url.searchParams.get("appv") !== VERSION){
+    url.searchParams.set("appv", VERSION);
+    window.location.replace(url.toString());
+    return;
+  }
+
+  // 最新版として読み込めた後は、アドレス表示だけ短い正式URLに戻す
+  window.addEventListener("DOMContentLoaded", function(){
+    try{
+      history.replaceState(null, "", window.location.pathname);
+    }catch(e){}
+  });
+})();
+</script>
+<div class="page">
+  <div class="card">
+    <h1>デジタル仏壇</h1>
+    <div class="sub">大切な方をいつでも身近に想い、手を合わせられるデジタル供養アプリです。</div>
+    
+
+    <div class="people-head">ご供養する方：</div>
+    <div class="people-row">
+      <button class="btn" onclick="addPerson()">＋追加</button>
+      <div id="people"></div>
+    </div>
+
+    <div class="tabs">
+      <div class="tab active" data-tab="tab1">① 遺影・位牌</div>
+      <div class="tab" data-tab="tab2">② 仏壇・お供え</div>
+      <div class="tab" data-tab="tab3">③ メモリアル</div>
+      <div class="tab" data-tab="tab4">④ 音声</div>
+      <div class="tab" data-tab="tab5">⑤ 終活メモ</div>
+      <div class="tab" data-tab="tab6">⑥ プロフィール</div>
+    </div>
+
+    <div class="panel active" id="tab1">
+      <div class="section-title">Portrait & Ihai</div>
+      <div class="box">
+        <div class="portrait-layout">
+          <div class="portrait-frame">
+            <div class="portrait-inner" id="portraitPreview">遺影を選択してください</div>
+          </div>
+          <div style="flex:1;min-width:180px;">
+            <div class="status-pill">人物ごとに保存</div>
+            <div class="note">
+              iPhoneの写真から遺影を選べます。選んだ写真は、この端末のブラウザ内に人物ごとに保存され、仏壇にも反映されます。
+            </div>
+            <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
+              <button class="btn gold" onclick="choosePortrait()">遺影を選ぶ</button>
+              <button class="btn ghost" onclick="removePortrait()">遺影を削除</button>
+              <input id="portraitFileInput" type="file" accept="image/*" style="display:none" onchange="handlePortraitFile(event)" />
+            </div>
+          </div>
+        </div>
+        <div class="ihai-preview" id="ihaiPreview">位牌プレビュー</div>
+
+        <div class="box" style="margin-top:12px;margin-bottom:0;">
+          <div class="box-title">位牌を編集</div>
+          <div class="note">戒名がない場合は空欄で大丈夫です。俗名だけでも保存できます。</div>
+          <div class="ihai-edit-grid">
+            <input type="text" id="ihaiKaimyoInput" placeholder="戒名（例：〇〇院〇〇居士）" />
+            <input type="text" id="ihaiZokumyoInput" placeholder="俗名（例：山田 太郎）" />
+          </div>
+          <div style="margin-top:10px;">
+            <button class="btn gold" onclick="saveIhai()">位牌を保存</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel" id="tab2">
+      <div class="section-title">Altar</div>
+
+      <div class="altar-wrap">
+        <div class="altar">
+          <div class="altar-title">縦長仏壇</div>
+          <div class="altar-top-ornament"></div>
+          <div class="door-left"></div>
+          <div class="door-right"></div>
+          <div class="altar-side-column left"></div>
+          <div class="altar-side-column right"></div>
+          <div class="inner-frame"></div>
+          <div class="scroll left" aria-hidden="true"></div>
+          <div class="scroll right" aria-hidden="true"></div>
+          <div class="gohonzon-panel" aria-hidden="true">
+            <div class="gohonzon-halo"></div>
+            <div class="gohonzon-body"></div>
+            <div class="gohonzon-lotus"></div>
+          </div>
+          <div class="altar-portrait" id="altarPortrait">遺影</div>
+          <div class="shelf-mid"></div>
+          <div class="ihai" id="altarIhai">位牌</div>
+          <div class="rin"></div>
+          <div class="rin-stick"></div>
+
+          <div class="incense-area" id="incenseArea">
+            <div class="burner"></div>
+            <div class="stick"></div>
+            <div class="smoke"></div>
+            <div class="smoke s2"></div>
+            <div class="smoke s3"></div>
+          </div>
+
+          <div id="altarOfferingLayer" style="position:absolute; inset:0; z-index:8;">
+            <div id="altarBeer" data-offering-key="beer" class="altar-offering offering-beer" style="display:none;">
+              <div class="altar-offering-inner"><div class="emoji">🍺</div><div class="label">ビール</div></div>
+            </div>
+            <div id="altarSnack" data-offering-key="snack" class="altar-offering offering-snack" style="display:none;">
+              <div class="altar-offering-inner"><div class="emoji">🍪</div><div class="label">お菓子</div></div>
+            </div>
+            <div id="altarFlowerLeft" data-offering-key="flowerLeft" class="flower-in-vase left" style="display:none;">
+              <div class="bukka-arrangement" aria-label="花">
+                <div class="bukka-stem"></div>
+                <span class="bukka-flower bukka-f1">🌼</span>
+                <span class="bukka-flower bukka-f2">🌸</span>
+                <span class="bukka-flower bukka-f3">🌺</span>
+                <span class="bukka-flower bukka-f4">🌼</span>
+                <span class="bukka-flower bukka-f5">🌸</span>
+                <span class="bukka-flower bukka-f6">🌼</span>
+                <div class="label">花</div>
+              </div>
+            </div>
+            <div id="altarFlowerRight" data-offering-key="flowerRight" class="flower-in-vase right" style="display:none;">
+              <div class="bukka-arrangement" aria-label="花">
+                <div class="bukka-stem"></div>
+                <span class="bukka-flower bukka-f1">🌼</span>
+                <span class="bukka-flower bukka-f2">🌸</span>
+                <span class="bukka-flower bukka-f3">🌺</span>
+                <span class="bukka-flower bukka-f4">🌼</span>
+                <span class="bukka-flower bukka-f5">🌸</span>
+                <span class="bukka-flower bukka-f6">🌼</span>
+                <div class="label">花</div>
+              </div>
+            </div>
+
+            <div id="altarTea" data-offering-key="tea" class="altar-offering offering-tea" style="display:none;">
+              <div class="altar-offering-inner"><div class="emoji">🍵</div><div class="label">お茶</div></div>
+            </div>
+            <div id="altarCoffee" data-offering-key="coffee" class="altar-offering offering-coffee" style="display:none;">
+              <div class="altar-offering-inner"><div class="emoji">☕</div><div class="label">コーヒー</div></div>
+            </div>
+            <div id="altarJuice" data-offering-key="juice" class="altar-offering offering-juice" style="display:none;">
+              <div class="altar-offering-inner"><div class="emoji">🧃</div><div class="label">ジュース</div></div>
+            </div>
+            <div id="altarFruit" data-offering-key="fruit" class="altar-offering offering-fruit" style="display:none;">
+              <div class="altar-offering-inner"><div class="emoji">🍎</div><div class="label">果物</div></div>
+            </div>
+            <div id="altarWagashi" data-offering-key="wagashi" class="altar-offering offering-wagashi" style="display:none;">
+              <div class="altar-offering-inner"><div class="emoji">🍡</div><div class="label">和菓子</div></div>
+            </div>
+            <div id="altarCake" data-offering-key="cake" class="altar-offering offering-cake" style="display:none;">
+              <div class="altar-offering-inner"><div class="emoji">🍰</div><div class="label">洋菓子</div></div>
+            </div>
+            <div id="altarCupNoodle" data-offering-key="cupnoodle" class="altar-offering offering-cupnoodle" style="display:none;">
+              <div class="altar-offering-inner"><div class="emoji">🍜</div><div class="label">カップ麺</div></div>
+            </div>
+            <div id="altarIncenseItem" data-offering-key="incenseItem" class="altar-offering offering-incense-item" style="display:none;">
+              <div class="altar-offering-inner"><div class="emoji">🕯️</div><div class="label">線香</div></div>
+            </div>
+
+            <div class="flower-vase-fixed left" aria-hidden="true">
+              <div class="flower-vase-shape"></div>
+            </div>
+            <div class="flower-vase-fixed right" aria-hidden="true">
+              <div class="flower-vase-shape"></div>
+            </div>
+          </div>
+
+          <div class="shelf-main"></div>
+          <div class="altar-front-rail"></div>
+          <div class="altar-base"></div>
+        </div>
+
+        <div class="altar-buttons">
+          <button class="btn gold" onclick="ringBell()">鈴を鳴らす</button>
+          <button class="btn" onclick="offerIncense(15)">線香 15秒</button>
+          <button class="btn" onclick="offerIncense(30)">線香 30秒</button>
+          <button class="btn" onclick="offerIncense(60)">線香 1分</button>
+          <button class="btn" onclick="addOffering()">お供えを追加</button>
+        </div>
+
+        <div class="note" style="margin-top:10px;">
+          仏壇の見た目を少し本物らしく整えました。お供えはこれまで通り指で移動できます。
+        </div>
+        <div style="margin-top:8px;">
+          <button class="btn" id="removeSelectedOfferingBtn" onclick="removeSelectedOffering()" disabled>
+            選んだお供えを取り除く
+          </button>
+        </div>
+      </div>
+
+      <div class="box">
+        <div class="box-title">仏壇の状態</div>
+        <div class="note" id="altarStatus">まだお供えの記録はありません。</div>
+        <div class="offerings" id="offeringList"></div>
+      </div>
+
+      <div class="box">
+        <div class="box-title">購入カタログA（シンプル版）</div>
+        <div class="note">左右に花立てを備え、花は花立ての真上にまっすぐ固定表示されます。花以外のお供えは自由に移動できます。</div>
+
+        <div class="catalog-grid">
+          <div class="catalog-item">
+            <div class="catalog-name">ビール</div>
+            <div class="catalog-meta">故人の好きだった飲み物をお供え</div>
+            <div style="margin-top:8px;"><button class="btn" onclick="quickOffer('ビール')">お供えする</button></div>
+          </div>
+
+          <div class="catalog-item">
+            <div class="catalog-name">お茶</div>
+            <div class="catalog-meta">日本茶・ほうじ茶など</div>
+            <div style="margin-top:8px;"><button class="btn" onclick="quickOffer('お茶')">お供えする</button></div>
+          </div>
+
+          <div class="catalog-item">
+            <div class="catalog-name">コーヒー</div>
+            <div class="catalog-meta">温かいコーヒーをお供え</div>
+            <div style="margin-top:8px;"><button class="btn" onclick="quickOffer('コーヒー')">お供えする</button></div>
+          </div>
+
+          <div class="catalog-item">
+            <div class="catalog-name">ジュース</div>
+            <div class="catalog-meta">ジュース・清涼飲料など</div>
+            <div style="margin-top:8px;"><button class="btn" onclick="quickOffer('ジュース')">お供えする</button></div>
+          </div>
+
+          <div class="catalog-item">
+            <div class="catalog-name">果物</div>
+            <div class="catalog-meta">りんご・みかんなど</div>
+            <div style="margin-top:8px;"><button class="btn" onclick="quickOffer('果物')">お供えする</button></div>
+          </div>
+
+          <div class="catalog-item">
+            <div class="catalog-name">和菓子</div>
+            <div class="catalog-meta">団子・まんじゅう・ようかんなど</div>
+            <div style="margin-top:8px;"><button class="btn" onclick="quickOffer('和菓子')">お供えする</button></div>
+          </div>
+
+          <div class="catalog-item">
+            <div class="catalog-name">洋菓子</div>
+            <div class="catalog-meta">ケーキ・クッキーなど</div>
+            <div style="margin-top:8px;"><button class="btn" onclick="quickOffer('洋菓子')">お供えする</button></div>
+          </div>
+
+          <div class="catalog-item">
+            <div class="catalog-name">カップ麺</div>
+            <div class="catalog-meta">好きだったカップ麺をお供え</div>
+            <div style="margin-top:8px;"><button class="btn" onclick="quickOffer('カップ麺')">お供えする</button></div>
+          </div>
+
+          <div class="catalog-item">
+            <div class="catalog-name">花</div>
+            <div class="catalog-meta">左右両端に供花を表示</div>
+            <div style="margin-top:8px;"><button class="btn" onclick="quickOffer('花')">お供えする</button></div>
+          </div>
+
+          <div class="catalog-item">
+            <div class="catalog-name">線香</div>
+            <div class="catalog-meta">お供え物として線香を置く</div>
+            <div style="margin-top:8px;"><button class="btn" onclick="quickOffer('線香')">お供えする</button></div>
+          </div>
+        </div></div>
+      </div>
+    </div>
+
+    <div class="panel" id="tab3">
+      <div class="section-title">Memorial</div>
+      <div class="box">
+        <div class="box-title">メモリアル（思い出）</div>
+        <div class="note">最初の版なので、写真の代わりに「思い出メモ」を保存する形にしています。</div>
+        <div style="margin-top:10px;">
+          <input type="text" id="memorialInput" placeholder="例）2026年の正月に家族でお墓参りに行った" />
+        </div>
+        <div style="margin-top:10px;">
+          <button class="btn gold" onclick="addMemorial()">思い出を追加</button>
+        </div>
+        <div class="memorial-list" id="memorialList"></div>
+      </div>
+    </div>
+
+    <div class="panel" id="tab4">
+      <div class="section-title">Audio</div>
+      <div class="box">
+        <div class="box-title">音声（将来拡張）</div>
+        <div class="note">将来のアプリ版では、ここに「ありがとう」「見守っているよ」などの音声ボタンを置く想定です。</div>
+      </div>
+    </div>
+
+    <div class="panel" id="tab5">
+      <div class="section-title">Shukatsu Memo</div>
+      <div class="box">
+        <div class="box-title">終活メモ</div>
+        <div class="note">供養する方ごとではなく、本人用の独立したメモです。</div>
+        <div style="margin-top:10px;">
+          <textarea id="endingMemo" placeholder="好きなもの、残しておきたいメッセージ、お供えしてほしいもの など"></textarea>
+        </div>
+        <div style="margin-top:10px;">
+          <button class="btn gold" onclick="saveEndingMemo()">保存</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel" id="tab6">
+      <div class="section-title">Profile</div>
+      <div class="box">
+        <div class="box-title">プロフィール</div>
+        <div class="note">ここで入力した名前は、位牌や仏壇にも反映されます。</div>
+        <div style="margin-top:10px;">
+          <input type="text" id="profileName" placeholder="例）祖父 / 祖母 / 山田太郎" />
+        </div>
+        <div style="margin-top:10px;">
+          <button class="btn gold" onclick="saveProfile()">保存</button>
+        </div>
+      </div>
+    </div>
+
+    
+    <div class="box" style="margin-top:14px;">
+      <div class="box-title">データ管理</div>
+      <div class="note">この端末に保存されている登録内容をすべて初期化できます。</div>
+      <button class="btn" style="margin-top:10px;" onclick="resetAllData()">すべてのデータを初期化</button>
+    </div>
+
+<div class="legal-wrap">
+      <div class="note">ご利用前に以下をご確認ください。</div>
+
+      <details>
+        <summary>利用規約</summary>
+        <div class="legal-text">
+          <h3>1. 本サービスについて</h3>
+          <div>「デジタル仏壇」は、大切な方を偲び、思い出やお供えなどを記録するためのWebサービスです。現在の機能は今後変更・追加される場合があります。</div>
+
+          <h3>2. 利用者の責任</h3>
+          <div>利用者は、登録・入力する氏名、文章、写真その他の情報について、必要な権利や許可を確認したうえで利用してください。第三者の権利を侵害する内容や、法令・公序良俗に反する利用は禁止します。</div>
+
+          <h3>3. データについて</h3>
+          <div>端末やブラウザの状態、仕様変更、通信障害などにより入力内容が失われる場合があります。大切な情報は、本サービスだけに依存せず別途保管してください。</div>
+
+          <h3>4. 購入機能について</h3>
+          <div>商品購入機能は現在準備中です。今後、外部の販売ページへ移動する機能を追加する場合があります。その際の購入条件・配送・返品等は各販売事業者の条件が適用されます。</div>
+
+          <h3>5. サービスの変更・停止</h3>
+          <div>改善、保守その他の理由により、事前の予告なく機能の変更・停止を行う場合があります。</div>
+
+          <h3>6. 規約の変更</h3>
+          <div>必要に応じて本規約を変更する場合があります。重要な変更は、本サービス上で分かりやすくお知らせします。</div>
+        </div>
+      </details>
+
+      <details>
+        <summary>プライバシーポリシー</summary>
+        <div class="legal-text">
+          <h3>1. 入力情報について</h3>
+          <div>現在のWeb版では、プロフィール、メモリアル、お供え、終活メモ等の入力内容は、お使いのブラウザ内（localStorage）に保存します。これらを運営者のサーバーへ送信する機能は実装していません。</div>
+
+          <h3>2. 個人情報の入力</h3>
+          <div>氏名や思い出など、個人を特定できる情報を入力する場合は、利用者自身の判断と責任で行ってください。特に重要な個人情報・機密情報の入力は避けてください。</div>
+
+          <h3>3. アクセス情報</h3>
+          <div>本サービスの提供に利用するホスティング事業者等により、サービス提供・安全管理等のためにアクセス情報が取り扱われる場合があります。</div>
+
+          <h3>4. 第三者サービス</h3>
+          <div>今後、商品購入ページなど外部サービスへのリンクを設置する場合があります。移動先では、各サービスのプライバシーポリシーが適用されます。</div>
+
+          <h3>5. ポリシーの変更</h3>
+          <div>機能追加やサービス内容の変更に合わせて、本ポリシーを更新する場合があります。</div>
+
+          <h3>6. お問い合わせ</h3>
+          <div>正式公開時に、運営者情報およびお問い合わせ窓口を本サービス上に掲載します。</div>
+        </div>
+      </details>
+    </div>
+  </div>
+</div>
+
+<script>
+  const STORAGE_KEY = "digitalButsudan_public_v4";
+  const OFFERING_EXPIRE_MS = 12 * 60 * 60 * 1000; // 12時間
+
+  const memorialItemsByPerson = {};
+  const profileNamesByPerson = {};
+  const ihaiKaimyoByPerson = {};
+  const ihaiZokumyoByPerson = {};
+  const offeringItemsByPerson = {};
+  const offeringAddedAtByPerson = {};
+  const offeringPositionsByPerson = {};
+  const portraitImagesByPerson = {};
+  const incenseEndsAtByPerson = {};
+  const incenseTimersByPerson = {};
+  let personKeys = [];
+  let activePersonKey = null;
+  let endingMemoValue = "";
+  let selectedOfferingKey = null;
+  let dragState = null;
+
+  function ensurePersonState(key){
+    if(!key) return;
+    if(!memorialItemsByPerson[key]) memorialItemsByPerson[key] = [];
+    if(!(key in profileNamesByPerson)) profileNamesByPerson[key] = "";
+    if(!(key in ihaiKaimyoByPerson)) ihaiKaimyoByPerson[key] = "";
+    if(!(key in ihaiZokumyoByPerson)) ihaiZokumyoByPerson[key] = "";
+    if(!offeringItemsByPerson[key]) offeringItemsByPerson[key] = [];
+    if(!offeringAddedAtByPerson[key]) offeringAddedAtByPerson[key] = {};
+    if(!offeringPositionsByPerson[key]) offeringPositionsByPerson[key] = {};
+    if(!(key in portraitImagesByPerson)) portraitImagesByPerson[key] = "";
+    if(!(key in incenseEndsAtByPerson)) incenseEndsAtByPerson[key] = 0;
+  }
+
+  function saveAppState(){
+    const data = {
+      personKeys,
+      activePersonKey,
+      memorialItemsByPerson,
+      profileNamesByPerson,
+      ihaiKaimyoByPerson,
+      ihaiZokumyoByPerson,
+      offeringItemsByPerson,
+      offeringAddedAtByPerson,
+      offeringPositionsByPerson,
+      portraitImagesByPerson,
+      incenseEndsAtByPerson,
+      endingMemoValue
+    };
+    try{
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    }catch(e){
+      console.warn("保存に失敗しました", e);
+    }
+  }
+
+  function restoreAppState(){
+    try{
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if(!raw) return;
+
+      const data = JSON.parse(raw);
+
+      personKeys = Array.isArray(data.personKeys) ? data.personKeys : [];
+      activePersonKey = data.activePersonKey || null;
+      endingMemoValue = data.endingMemoValue || "";
+
+      Object.assign(memorialItemsByPerson, data.memorialItemsByPerson || {});
+      Object.assign(profileNamesByPerson, data.profileNamesByPerson || {});
+      Object.assign(ihaiKaimyoByPerson, data.ihaiKaimyoByPerson || {});
+      Object.assign(ihaiZokumyoByPerson, data.ihaiZokumyoByPerson || {});
+      Object.assign(offeringItemsByPerson, data.offeringItemsByPerson || {});
+      Object.assign(offeringAddedAtByPerson, data.offeringAddedAtByPerson || {});
+      Object.assign(offeringPositionsByPerson, data.offeringPositionsByPerson || {});
+      Object.assign(portraitImagesByPerson, data.portraitImagesByPerson || {});
+      Object.assign(incenseEndsAtByPerson, data.incenseEndsAtByPerson || {});
+
+      document.getElementById("endingMemo").value = endingMemoValue;
+
+      renderPeople();
+
+      if(activePersonKey && personKeys.includes(activePersonKey)){
+        loadPersonState();
+      }else if(personKeys.length){
+        activePersonKey = personKeys[0];
+        renderPeople();
+        loadPersonState();
+      }
+
+      personKeys.forEach(key => {
+        ensurePersonState(key);
+        if(getIncenseRemainingSeconds(key) > 0){
+          scheduleIncenseEnd(key);
+        }else{
+          incenseEndsAtByPerson[key] = 0;
+        }
+      });
+
+      saveAppState();
+    }catch(e){
+      console.warn("復元に失敗しました", e);
+    }
+  }
+
+  function getDisplayName(key){
+    if(!key) return "";
+    ensurePersonState(key);
+    return profileNamesByPerson[key] || key;
+  }
+
+  function createPersonChip(key){
+    const chip = document.createElement("button");
+    chip.className = "person-chip" + (key === activePersonKey ? " active" : "");
+    chip.textContent = key;
+    chip.dataset.personKey = key;
+
+    chip.addEventListener("click", function(){
+      document.querySelectorAll(".person-chip").forEach(c => c.classList.remove("active"));
+      chip.classList.add("active");
+      activePersonKey = key;
+      saveAppState();
+      loadPersonState();
+    });
+
+    return chip;
+  }
+
+  function renderPeople(){
+    const people = document.getElementById("people");
+    people.innerHTML = "";
+    personKeys.forEach(key => people.appendChild(createPersonChip(key)));
+  }
+
+  function renderMemorial(){
+    const list = document.getElementById("memorialList");
+    list.innerHTML = "";
+    if(!activePersonKey) return;
+
+    ensurePersonState(activePersonKey);
+    memorialItemsByPerson[activePersonKey].forEach(item => {
+      const div = document.createElement("div");
+      div.className = "memorial-item";
+      div.textContent = item;
+      list.appendChild(div);
+    });
+  }
+
+  function renderPortrait(){
+    const preview = document.getElementById("portraitPreview");
+    const altarPortrait = document.getElementById("altarPortrait");
+
+    if(!activePersonKey){
+      preview.textContent = "遺影を選択してください";
+      altarPortrait.textContent = "遺影";
+      return;
+    }
+
+    ensurePersonState(activePersonKey);
+    const photo = portraitImagesByPerson[activePersonKey];
+
+    if(photo){
+      preview.innerHTML = "";
+      const img1 = document.createElement("img");
+      img1.src = photo;
+      img1.alt = "遺影";
+      preview.appendChild(img1);
+
+      altarPortrait.innerHTML = "";
+      const img2 = document.createElement("img");
+      img2.src = photo;
+      img2.alt = "遺影";
+      altarPortrait.appendChild(img2);
+    }else{
+      preview.textContent = "遺影を選択してください";
+      altarPortrait.textContent = getDisplayName(activePersonKey) || "遺影";
+    }
+  }
+
+  function choosePortrait(){
+    if(!activePersonKey){
+      alert("先に「ご供養する方」を追加・選択してください");
+      return;
+    }
+    document.getElementById("portraitFileInput").click();
+  }
+
+  function handlePortraitFile(event){
+    if(!activePersonKey) return;
+
+    const file = event.target.files && event.target.files[0];
+    if(!file) return;
+
+    if(!file.type.startsWith("image/")){
+      alert("画像ファイルを選んでください");
+      event.target.value = "";
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = function(e){
+      const img = new Image();
+      img.onload = function(){
+        const maxW = 420;
+        const maxH = 560;
+        let w = img.width;
+        let h = img.height;
+        const scale = Math.min(1, maxW / w, maxH / h);
+        w = Math.max(1, Math.round(w * scale));
+        h = Math.max(1, Math.round(h * scale));
+
+        const canvas = document.createElement("canvas");
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, w, h);
+
+        const dataUrl = canvas.toDataURL("image/jpeg", 0.78);
+        portraitImagesByPerson[activePersonKey] = dataUrl;
+        saveAppState();
+        renderPortrait();
+        alert("遺影を保存しました");
+      };
+      img.onerror = function(){
+        alert("写真を読み込めませんでした");
+      };
+      img.src = e.target.result;
+    };
+    reader.onerror = function(){
+      alert("写真を読み込めませんでした");
+    };
+    reader.readAsDataURL(file);
+
+    event.target.value = "";
+  }
+
+  function removePortrait(){
+    if(!activePersonKey){
+      alert("先に「ご供養する方」を追加・選択してください");
+      return;
+    }
+
+    ensurePersonState(activePersonKey);
+    if(!portraitImagesByPerson[activePersonKey]){
+      alert("削除する遺影はありません");
+      return;
+    }
+
+    if(!confirm("この方の遺影を削除しますか？")) return;
+
+    portraitImagesByPerson[activePersonKey] = "";
+    saveAppState();
+    renderPortrait();
+  }
+
+  function renderIhai(){
+    const altar = document.getElementById("altarIhai");
+    const preview = document.getElementById("ihaiPreview");
+
+    if(!activePersonKey){
+      altar.textContent = "位牌";
+      preview.textContent = "位牌プレビュー";
+      return;
+    }
+
+    ensurePersonState(activePersonKey);
+
+    const kaimyo = ihaiKaimyoByPerson[activePersonKey].trim();
+    const zokumyo = ihaiZokumyoByPerson[activePersonKey].trim();
+    const fallback = getDisplayName(activePersonKey);
+
+    altar.innerHTML = "";
+
+    if(kaimyo){
+      const col = document.createElement("div");
+      col.className = "ihai-name-col";
+      col.textContent = kaimyo;
+      altar.appendChild(col);
+    }
+
+    if(zokumyo){
+      const col = document.createElement("div");
+      col.className = "ihai-name-col";
+      col.textContent = zokumyo;
+      altar.appendChild(col);
+    }
+
+    if(!kaimyo && !zokumyo){
+      const col = document.createElement("div");
+      col.className = "ihai-name-col";
+      col.textContent = fallback || "位牌";
+      altar.appendChild(col);
+    }
+
+    const lines = [];
+    if(kaimyo) lines.push("戒名：" + kaimyo);
+    if(zokumyo) lines.push("俗名：" + zokumyo);
+    preview.textContent = lines.length ? lines.join("　／　") : (fallback || "位牌");
+
+    document.getElementById("ihaiKaimyoInput").value = kaimyo;
+    document.getElementById("ihaiZokumyoInput").value = zokumyo;
+  }
+
+  function saveIhai(){
+    if(!activePersonKey){
+      alert("先に「ご供養する方」を追加・選択してください");
+      return;
+    }
+
+    ensurePersonState(activePersonKey);
+    ihaiKaimyoByPerson[activePersonKey] =
+      document.getElementById("ihaiKaimyoInput").value.trim();
+    ihaiZokumyoByPerson[activePersonKey] =
+      document.getElementById("ihaiZokumyoInput").value.trim();
+
+    saveAppState();
+    renderIhai();
+    alert("位牌を保存しました");
+  }
+
+  function loadPersonState(){
+    if(!activePersonKey) return;
+    ensurePersonState(activePersonKey);
+
+    const displayName = getDisplayName(activePersonKey);
+    renderPortrait();
+    renderIhai();
+    document.getElementById("profileName").value = profileNamesByPerson[activePersonKey];
+
+    document.getElementById("memorialInput").value = "";
+    renderMemorial();
+    renderOfferings();
+    refreshIncenseDisplay();
+  }
+
+  document.querySelectorAll(".tab").forEach(tab => {
+    tab.addEventListener("click", () => {
+      document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+      tab.classList.add("active");
+
+      const target = tab.getAttribute("data-tab");
+      document.querySelectorAll(".panel").forEach(panel => {
+        panel.classList.remove("active");
+        if(panel.id === target) panel.classList.add("active");
+      });
+    });
+  });
+
+  function addPerson(){
+    const name = prompt("名前を入力してください");
+    if(!name) return;
+
+    const key = name.trim();
+    if(!key) return;
+
+    if(personKeys.includes(key)){
+      activePersonKey = key;
+      renderPeople();
+      loadPersonState();
+      alert("同じ名前の方はすでに登録されています");
+      return;
+    }
+
+    personKeys.push(key);
+    activePersonKey = key;
+    ensurePersonState(key);
+    renderPeople();
+    loadPersonState();
+    saveAppState();
+  }
+
+  function setPortraitStatus(text){
+    alert(text);
+  }
+
+  function ringBell(){
+    alert("チーン");
+  }
+
+  function getIncenseRemainingSeconds(key){
+    ensurePersonState(key);
+    return Math.max(0, Math.ceil((incenseEndsAtByPerson[key] - Date.now()) / 1000));
+  }
+
+  function refreshIncenseDisplay(){
+    const incenseArea = document.getElementById("incenseArea");
+    const status = document.getElementById("altarStatus");
+
+    if(!activePersonKey){
+      incenseArea.style.display = "none";
+      return;
+    }
+
+    ensurePersonState(activePersonKey);
+    const remaining = getIncenseRemainingSeconds(activePersonKey);
+
+    if(remaining > 0){
+      incenseArea.style.display = "block";
+      status.textContent = "線香をあげています（残り約" + remaining + "秒）";
+    }else{
+      if(incenseEndsAtByPerson[activePersonKey] !== 0){
+        incenseEndsAtByPerson[activePersonKey] = 0;
+        saveAppState();
+      }
+      incenseArea.style.display = "none";
+      const items = offeringItemsByPerson[activePersonKey];
+      status.textContent = items.length ? "最近のお供えです。" : "まだお供えの記録はありません。";
+    }
+  }
+
+  function scheduleIncenseEnd(key){
+    if(incenseTimersByPerson[key]){
+      clearTimeout(incenseTimersByPerson[key]);
+    }
+
+    const remainingMs = Math.max(0, incenseEndsAtByPerson[key] - Date.now());
+
+    incenseTimersByPerson[key] = setTimeout(() => {
+      incenseEndsAtByPerson[key] = 0;
+      saveAppState();
+      if(activePersonKey === key){
+        refreshIncenseDisplay();
+      }
+    }, remainingMs + 50);
+  }
+
+  function offerIncense(seconds){
+    if(!activePersonKey){
+      alert("先に「ご供養する方」を追加・選択してください");
+      return;
+    }
+
+    ensurePersonState(activePersonKey);
+    incenseEndsAtByPerson[activePersonKey] = Date.now() + (seconds * 1000);
+    saveAppState();
+    scheduleIncenseEnd(activePersonKey);
+    refreshIncenseDisplay();
+  }
+
+  function offeringKeyFromName(name){
+    return {
+      "ビール":"beer",
+      "お茶":"tea",
+      "コーヒー":"coffee",
+      "ジュース":"juice",
+      "果物":"fruit",
+      "和菓子":"wagashi",
+      "洋菓子":"cake",
+      "カップ麺":"cupnoodle",
+      "線香":"incenseItem",
+      "お菓子":"snack"
+    }[name] || null;
+  }
+
+  function clearOfferingPositionForName(personKey, name){
+    if(!offeringPositionsByPerson[personKey]) return;
+
+    if(name === "花"){
+      delete offeringPositionsByPerson[personKey].flowerLeft;
+      delete offeringPositionsByPerson[personKey].flowerRight;
+      return;
+    }
+
+    const key = offeringKeyFromName(name);
+    if(key) delete offeringPositionsByPerson[personKey][key];
+  }
+
+  function cleanupExpiredOfferings(personKey, saveAfter = true){
+    if(!personKey) return false;
+    ensurePersonState(personKey);
+
+    const now = Date.now();
+    const items = offeringItemsByPerson[personKey];
+    const added = offeringAddedAtByPerson[personKey];
+    let changed = false;
+
+    // 旧版から引き継いだお供えには、アップデート時点を開始時刻として設定
+    items.forEach(name => {
+      if(!added[name]){
+        added[name] = now;
+        changed = true;
+      }
+    });
+
+    const kept = [];
+    items.forEach(name => {
+      const startedAt = added[name] || now;
+      if(now - startedAt >= OFFERING_EXPIRE_MS){
+        delete added[name];
+        clearOfferingPositionForName(personKey, name);
+        changed = true;
+      }else{
+        kept.push(name);
+      }
+    });
+
+    if(changed){
+      offeringItemsByPerson[personKey] = kept;
+      if(saveAfter) saveAppState();
+    }
+
+    return changed;
+  }
+
+  function cleanupAllExpiredOfferings(){
+    let changed = false;
+    personKeys.forEach(key => {
+      if(cleanupExpiredOfferings(key, false)) changed = true;
+    });
+    if(changed) saveAppState();
+
+    if(activePersonKey){
+      renderOfferings();
+      refreshIncenseDisplay();
+    }
+  }
+
+  function defaultOfferingPosition(key){
+    const defaults = {
+      beer: {left:8, top:77},
+      tea: {left:23, top:77},
+      coffee: {left:38, top:77},
+      juice: {left:53, top:77},
+      fruit: {left:36, top:66},
+      wagashi: {left:50, top:66},
+      cake: {left:64, top:66},
+      cupnoodle: {left:22, top:66},
+      snack: {left:43, top:80},
+      flowerLeft: {left:2, top:72},
+      flowerRight: {left:80, top:72},
+      incenseItem: {left:68, top:78}
+    };
+    return defaults[key] || {left:40, top:75};
+  }
+
+  function getOfferingElement(key){
+    return {
+      beer: document.getElementById("altarBeer"),
+      tea: document.getElementById("altarTea"),
+      coffee: document.getElementById("altarCoffee"),
+      juice: document.getElementById("altarJuice"),
+      fruit: document.getElementById("altarFruit"),
+      wagashi: document.getElementById("altarWagashi"),
+      cake: document.getElementById("altarCake"),
+      cupnoodle: document.getElementById("altarCupNoodle"),
+      snack: document.getElementById("altarSnack"),
+      flowerLeft: document.getElementById("altarFlowerLeft"),
+      flowerRight: document.getElementById("altarFlowerRight"),
+      incenseItem: document.getElementById("altarIncenseItem")
+    }[key] || null;
+  }
+
+  function applyOfferingPosition(key){
+    if(!activePersonKey) return;
+    ensurePersonState(activePersonKey);
+
+    const el = getOfferingElement(key);
+    if(!el) return;
+
+    const saved = offeringPositionsByPerson[activePersonKey][key] || defaultOfferingPosition(key);
+    el.style.left = saved.left + "%";
+    el.style.top = saved.top + "%";
+    el.style.right = "auto";
+    el.style.bottom = "auto";
+    el.style.transform = "none";
+  }
+
+  function updateOfferingSelection(){
+    document.querySelectorAll("[data-offering-key]").forEach(el => {
+      el.classList.toggle("selected", el.dataset.offeringKey === selectedOfferingKey);
+    });
+
+    const btn = document.getElementById("removeSelectedOfferingBtn");
+    if(!btn) return;
+
+    const nameByKey = {
+      beer:"ビール",
+      tea:"お茶",
+      coffee:"コーヒー",
+      juice:"ジュース",
+      fruit:"果物",
+      wagashi:"和菓子",
+      cake:"洋菓子",
+      cupnoodle:"カップ麺",
+      incenseItem:"線香",
+      snack:"お菓子",
+      flowerLeft:"花",
+      flowerRight:"花"
+    };
+
+    if(selectedOfferingKey && nameByKey[selectedOfferingKey]){
+      btn.disabled = false;
+      btn.textContent = nameByKey[selectedOfferingKey] + "を取り除く";
+    }else{
+      btn.disabled = true;
+      btn.textContent = "選んだお供えを取り除く";
+    }
+  }
+
+  function selectOffering(key){
+    selectedOfferingKey = key;
+    updateOfferingSelection();
+  }
+
+  function bindFixedFlowerSelection(el){
+    if(!el || el.dataset.fixedBound === "1") return;
+    el.dataset.fixedBound = "1";
+
+    el.addEventListener("click", function(e){
+      selectOffering(el.dataset.offeringKey);
+      e.preventDefault();
+      e.stopPropagation();
+    });
+  }
+
+  function bindOfferingDrag(el){
+    if(!el || el.dataset.dragBound === "1") return;
+    el.dataset.dragBound = "1";
+
+    el.addEventListener("pointerdown", function(e){
+      if(!activePersonKey) return;
+
+      const key = el.dataset.offeringKey;
+      selectOffering(key);
+
+      const stage = el.closest(".altar-stage") || el.parentElement.parentElement;
+      const stageRect = stage.getBoundingClientRect();
+      const elRect = el.getBoundingClientRect();
+
+      dragState = {
+        key,
+        el,
+        stage,
+        pointerId: e.pointerId,
+        offsetX: e.clientX - elRect.left,
+        offsetY: e.clientY - elRect.top
+      };
+
+      el.classList.add("dragging");
+      try{ el.setPointerCapture(e.pointerId); }catch(err){}
+      e.preventDefault();
+    });
+
+    el.addEventListener("pointermove", function(e){
+      if(!dragState || dragState.el !== el) return;
+
+      const rect = dragState.stage.getBoundingClientRect();
+      const x = e.clientX - rect.left - dragState.offsetX;
+      const y = e.clientY - rect.top - dragState.offsetY;
+
+      const maxX = Math.max(0, rect.width - el.offsetWidth);
+      const maxY = Math.max(0, rect.height - el.offsetHeight);
+
+      const clampedX = Math.max(0, Math.min(maxX, x));
+      const clampedY = Math.max(0, Math.min(maxY, y));
+
+      const leftPct = rect.width ? (clampedX / rect.width) * 100 : 0;
+      const topPct = rect.height ? (clampedY / rect.height) * 100 : 0;
+
+      el.style.left = leftPct + "%";
+      el.style.top = topPct + "%";
+      el.style.right = "auto";
+      el.style.bottom = "auto";
+      el.style.transform = "none";
+
+      e.preventDefault();
+    });
+
+    function finishDrag(e){
+      if(!dragState || dragState.el !== el) return;
+
+      const rect = dragState.stage.getBoundingClientRect();
+      const leftPx = parseFloat(el.style.left) || 0;
+      const topPx = parseFloat(el.style.top) || 0;
+
+      ensurePersonState(activePersonKey);
+      offeringPositionsByPerson[activePersonKey][dragState.key] = {
+        left: leftPx,
+        top: topPx
+      };
+
+      saveAppState();
+
+      el.classList.remove("dragging");
+      try{ el.releasePointerCapture(dragState.pointerId); }catch(err){}
+      dragState = null;
+
+      if(e) e.preventDefault();
+    }
+
+    el.addEventListener("pointerup", finishDrag);
+    el.addEventListener("pointercancel", finishDrag);
+  }
+
+  function renderAltarOfferings(){
+    const map = [
+      ["beer","ビール"],
+      ["tea","お茶"],
+      ["coffee","コーヒー"],
+      ["juice","ジュース"],
+      ["fruit","果物"],
+      ["wagashi","和菓子"],
+      ["cake","洋菓子"],
+      ["cupnoodle","カップ麺"],
+      ["incenseItem","線香"]
+    ];
+
+    const allKeys = map.map(x => x[0]).concat(["snack","flowerLeft","flowerRight"]);
+
+    allKeys.forEach(key => {
+      const el = getOfferingElement(key);
+      if(el) el.style.display = "none";
+    });
+
+    if(!activePersonKey){
+      selectedOfferingKey = null;
+      updateOfferingSelection();
+      return;
+    }
+
+    ensurePersonState(activePersonKey);
+    const items = offeringItemsByPerson[activePersonKey] || [];
+
+    map.forEach(([key,name]) => {
+      const el = getOfferingElement(key);
+      if(items.includes(name) && el) el.style.display = "flex";
+    });
+
+    // 旧版のお菓子データにも対応
+    const snack = getOfferingElement("snack");
+    if(items.includes("お菓子") && snack) snack.style.display = "flex";
+
+    if(items.includes("花")){
+      const flowerLeft = getOfferingElement("flowerLeft");
+      const flowerRight = getOfferingElement("flowerRight");
+
+      // 旧版で保存された花のドラッグ位置は使わない
+      if(offeringPositionsByPerson[activePersonKey]){
+        delete offeringPositionsByPerson[activePersonKey].flowerLeft;
+        delete offeringPositionsByPerson[activePersonKey].flowerRight;
+      }
+
+      if(flowerLeft) flowerLeft.style.display = "flex";
+      if(flowerRight) flowerRight.style.display = "flex";
+    }
+
+    allKeys.forEach(key => {
+      const el = getOfferingElement(key);
+      if(!el || el.style.display === "none") return;
+
+      if(key === "flowerLeft" || key === "flowerRight"){
+        // 花は花立ての真上に固定
+        el.style.left = "";
+        el.style.top = "";
+        el.style.right = "";
+        el.style.bottom = "";
+        el.style.transform = "none";
+        bindFixedFlowerSelection(el);
+      }else{
+        applyOfferingPosition(key);
+        bindOfferingDrag(el);
+      }
+    });
+
+    selectedOfferingKey = null;
+    updateOfferingSelection();
+  }
+
+  function removeSelectedOffering(){
+    if(!activePersonKey || !selectedOfferingKey) return;
+
+    ensurePersonState(activePersonKey);
+
+    const nameByKey = {
+      beer:"ビール",
+      tea:"お茶",
+      coffee:"コーヒー",
+      juice:"ジュース",
+      fruit:"果物",
+      wagashi:"和菓子",
+      cake:"洋菓子",
+      cupnoodle:"カップ麺",
+      incenseItem:"線香",
+      snack:"お菓子",
+      flowerLeft:"花",
+      flowerRight:"花"
+    };
+
+    const itemName = nameByKey[selectedOfferingKey];
+    if(!itemName) return;
+
+    if(!confirm(itemName + "を仏壇から取り除きますか？")) return;
+
+    const items = offeringItemsByPerson[activePersonKey];
+    const idx = items.indexOf(itemName);
+    if(idx >= 0) items.splice(idx, 1);
+
+    delete offeringAddedAtByPerson[activePersonKey][itemName];
+    clearOfferingPositionForName(activePersonKey, itemName);
+
+    selectedOfferingKey = null;
+    saveAppState();
+    renderOfferings();
+  }
+
+  function renderOfferings(){
+    const list = document.getElementById("offeringList");
+    list.innerHTML = "";
+    if(!activePersonKey) return;
+
+    ensurePersonState(activePersonKey);
+    cleanupExpiredOfferings(activePersonKey);
+    offeringItemsByPerson[activePersonKey].forEach(item => {
+      const div = document.createElement("div");
+      div.className = "offer-chip";
+      div.textContent = item;
+      list.appendChild(div);
+    });
+    renderAltarOfferings();
+  }
+
+  function addOffering(){
+    if(!activePersonKey){
+      alert("先に「ご供養する方」を追加・選択してください");
+      return;
+    }
+
+    const item = prompt("お供えを入力してください");
+    if(!item) return;
+
+    ensurePersonState(activePersonKey);
+    if(!offeringItemsByPerson[activePersonKey].includes(item)){
+      offeringItemsByPerson[activePersonKey].unshift(item);
+    }
+    offeringAddedAtByPerson[activePersonKey][item] = Date.now();
+    saveAppState();
+    document.getElementById("altarStatus").textContent = "最近のお供えです。";
+    renderOfferings();
+  }
+
+  function quickOffer(name){
+    if(!activePersonKey){
+      alert("先に「ご供養する方」を追加・選択してください");
+      return;
+    }
+
+    ensurePersonState(activePersonKey);
+
+    if(!offeringItemsByPerson[activePersonKey].includes(name)){
+      offeringItemsByPerson[activePersonKey].unshift(name);
+    }
+
+    // 同じお供えをもう一度選んだ場合も、ここから12時間に更新
+    offeringAddedAtByPerson[activePersonKey][name] = Date.now();
+
+    saveAppState();
+    document.getElementById("altarStatus").textContent = "最近のお供えです。";
+    renderOfferings();
+  }
+
+  function buyItem(name){
+    alert(name + " の購入機能は現在準備中です。");
+  }
+
+  function addMemorial(){
+    if(!activePersonKey){
+      alert("先に「ご供養する方」を追加・選択してください");
+      return;
+    }
+
+    const value = document.getElementById("memorialInput").value.trim();
+    if(!value) return;
+
+    ensurePersonState(activePersonKey);
+    memorialItemsByPerson[activePersonKey].unshift(value);
+    document.getElementById("memorialInput").value = "";
+    saveAppState();
+    renderMemorial();
+  }
+
+  function saveEndingMemo(){
+    endingMemoValue = document.getElementById("endingMemo").value;
+    saveAppState();
+    alert("終活メモを保存しました");
+  }
+
+  function saveProfile(){
+    if(!activePersonKey){
+      alert("先に「ご供養する方」を追加・選択してください");
+      return;
+    }
+
+    const name = document.getElementById("profileName").value.trim();
+    if(!name) return;
+
+    ensurePersonState(activePersonKey);
+    profileNamesByPerson[activePersonKey] = name;
+    renderPortrait();
+    renderIhai();
+    saveAppState();
+    alert("プロフィールを保存しました");
+  }
+
+
+  function resetAllData(){
+    const ok = confirm("この端末に保存されている人物・遺影・位牌・プロフィール・お供え・お供え位置・メモリアル・終活メモ等をすべて削除します。よろしいですか？");
+    if(!ok) return;
+
+    try{
+      localStorage.removeItem(STORAGE_KEY);
+    }catch(e){}
+
+    Object.keys(incenseTimersByPerson).forEach(key => {
+      try{ clearTimeout(incenseTimersByPerson[key]); }catch(e){}
+    });
+
+    alert("保存データを初期化しました。");
+    window.location.reload();
+  }
+
+  restoreAppState();
+  cleanupAllExpiredOfferings();
+
+  // アプリを開いたままでも期限切れを自動反映（1分ごとに確認）
+  setInterval(cleanupAllExpiredOfferings, 60 * 1000);
+</script>
+</body>
+</html>
